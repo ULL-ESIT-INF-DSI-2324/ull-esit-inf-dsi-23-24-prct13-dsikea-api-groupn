@@ -20,6 +20,7 @@ export const transactionSchema = new Schema<ITransaction>({
   },
   furniture: [
     {
+      type: Schema.Types.ObjectId,
       ref: "Furniture",
     },
   ],
