@@ -1,67 +1,119 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response} from 'express';
+import './db/mongoose.js';
+import furniture from '../models/furniture.js';
+import { furnitureSchema } from '../models/furniture.js';
 
 const app = express();
 app.use(express.json());
 
-// Datos de ejemplo para la tienda de muebles
-let muebles = [
-    { id: 1, nombre: 'Silla', precio: 50 },
-    { id: 2, nombre: 'Mesa', precio: 100 },
-];
-
-// Obtener todos los muebles
-app.get('/muebles', (req: Request, res: Response) => {
-    res.json(muebles);
-});
-
-// Obtener un mueble por su ID
-app.get('/muebles/:id', (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    const mueble = muebles.find((m) => m.id === id);
-    if (mueble) {
-        res.json(mueble);
-    } else {
-        res.status(404).json({ message: 'Mueble no encontrado' });
+function comprubeQuery (req:Request) {    
+  const keys = Object.keys(req.query);
+  const keysFurnitures = Object.keys(furnitureSchema.obj);
+  for (const key of keys) {
+    if (!keysFurnitures.includes(key)) {
+      return false;
     }
-});
+  }
+  return true;
+}
 
-// Crear un nuevo mueble
-app.post('/muebles', (req: Request, res: Response) => {
-    const { nombre, precio } = req.body;
-    const id = muebles.length + 1;
-    const nuevoMueble = { id, nombre, precio };
-    muebles.push(nuevoMueble);
-    res.status(201).json(nuevoMueble);
-});
-
-// Actualizar un mueble existente
-app.put('/muebles/:id', (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    const { nombre, precio } = req.body;
-    const mueble = muebles.find((m) => m.id === id);
-    if (mueble) {
-        mueble.nombre = nombre;
-        mueble.precio = precio;
-        res.json(mueble);
+app.get('/furnitures', (req: Request, res: Response) => {
+  if(req.query){
+    if(comprubeQuery(req)){
+      furniture.find(req.query).then((furnitures) => {
+        res.json(furnitures);
+      }).catch(() => {
+        res.status(500).json({ message: 'Muebles no encontrados' });
+      });
     } else {
-        res.status(404).json({ message: 'Mueble no encontrado' });
+      res.status(400).json({ message: 'Parámetros de búsqueda no válidos, recuerde que los posibles campos son: name, description, material y price' });
     }
+  } else {
+    res.status(400).json({ message: 'No se ha especificado ningún parámetro de búsqueda' });
+  }
 });
 
-// Eliminar un mueble
-app.delete('/muebles/:id', (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    const index = muebles.findIndex((m) => m.id === id);
-    if (index !== -1) {
-        const muebleEliminado = muebles.splice(index, 1)[0];
-        res.json(muebleEliminado);
+
+app.get('/furnitures/:id', (req: Request, res: Response) => {
+  const id = req.params.id;
+  furniture.findById(id).then((furniture) => {
+    if (furniture) {
+      res.json(furniture);
     } else {
-        res.status(404).json({ message: 'Mueble no encontrado' });
+      res.status(404).json({ message: 'Mueble no encontrado' });
     }
+  }).catch(() => {
+    res.status(500).json({ message: 'Error al buscar el mueble' });
+  });
 });
 
-// Iniciar el servidor
-const port = 3000;
-app.listen(port, () => {
-    console.log(`Servidor iniciado en http://localhost:${port}`);
+
+app.post('/furnitures', (req: Request, res: Response) => {
+  const newFurniture = new furniture(req.body);
+  if (!req.body.cantity){
+    newFurniture.save().then(() => {
+      res.json({ message: 'Mueble añadido correctamente' });
+    }).catch(() => {
+      res.status(500).json({ message: 'Error al añadir el mueble' });
+    });
+  } else {
+    res.status(400).json({ message: 'No se puede añadir un mueble con cantidad, para ello se debe hacer una transacción' });
+  }
+});
+
+app.patch('/furnitures/:id', (req: Request, res: Response) => {
+  const id = req.params.id;
+  furniture.findByIdAndUpdate(id
+    , req.body
+    , { new: true }
+  ).then((furniture) => {
+    if (furniture) {
+      res.json(furniture);
+    } else {
+      res.status(404).json({ message: 'Mueble no encontrado' });
+    }
+  }).catch(() => {
+    res.status(500).json({ message: 'Error al actualizar el mueble' });
+  });
+});
+
+app.patch('/furnitures', (req: Request, res: Response) => {
+  furniture.updateMany(req.query, req.body).then((furniture) => {
+    if (furniture) {
+      res.json(furniture);
+    } else {
+      res.status(404).json({ message: 'Mueble no encontrado' });
+    }
+  }).catch(() => {
+    res.status(500).json({ message: 'Error al actualizar el mueble' });
+  });
+});
+
+app.delete('/furnitures', (req: Request, res: Response) => {
+  furniture.deleteMany(req.query).then((furniture) => {
+    if (furniture) {
+      res.json(furniture);
+    } else {
+      res.status(404).json({ message: 'Mueble no encontrado' });
+    }
+  }).catch(() => {
+    res.status(500).json({ message: 'Error al eliminar el mueble' });
+  });
+});
+
+app.delete('/furnitures/:id', (req: Request, res: Response) => {
+  const id = req.params.id;
+  furniture.findByIdAndDelete(id).then((furniture) => {
+    if (furniture) {
+      res.json(furniture);
+    } else {
+      res.status(404).json({ message: 'Mueble no encontrado' });
+    }
+  }).catch(() => {
+    res.status(500).json({ message: 'Error al eliminar el mueble' });
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server is up on port 3000');
 });

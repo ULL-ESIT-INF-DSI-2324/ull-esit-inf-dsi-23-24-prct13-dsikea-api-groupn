@@ -23,14 +23,11 @@ interface IFurniture extends Document {
   material: string;
   dimensions: Dimension;
   price: number;
+  cantity?: number;
+  color: string;
 }
 
 export const furnitureSchema: Schema = new Schema<IFurniture>({
-  id: {
-    type: Number,
-    required: true,
-    unique: true,
-  },
   name: {
     type: String,
     required: true,
@@ -42,6 +39,7 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
   material: {
     type: String,
     required: true,
+    enum: ["wood", "metal", "plastic", "glass", "fabric", "leather"],
   },
   dimensions: {
     type: {
@@ -55,6 +53,15 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
     type: Number,
     required: true,
   },
+  cantity: {
+    type: Number,
+    required: true,
+  },
+  color: {
+    type: String,
+    required: true,
+    enum: ["red", "blue", "green", "yellow", "black", "white", "brown"],
+  }
 });
 
 export default model<IFurniture>("Furniture", furnitureSchema);
