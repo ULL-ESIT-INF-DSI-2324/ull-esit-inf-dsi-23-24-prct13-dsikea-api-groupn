@@ -17,7 +17,6 @@ type Dimension = {
 };
 
 interface IFurniture extends Document {
-  id: number;
   name: string;
   description: string;
   material: string;
