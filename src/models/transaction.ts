@@ -36,20 +36,6 @@ export const transactionSchema = new Schema<ITransaction>({
         type: Number,
         required: true,
       },
-      name: {
-        type: String,
-        required: true,
-      },
-      material: {
-        type: String,
-        enum: ["wood", "metal", "plastic", "glass", "fabric", "leather"],
-        required: true,
-      },
-      color: {
-        type: String,
-        enum: ["red", "blue", "green", "yellow", "black", "white", "brown"],
-        required: true,
-      },
     }
   ],
   customer: {

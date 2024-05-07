@@ -3,7 +3,7 @@ import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
 import Provider from "../models/provider.js";
 import Furniture from "../models/furniture.js";
-
+//usar express no touters.
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
 
@@ -78,10 +78,11 @@ transactionsRouter.post("/transactions:dni", async (req, res) => {
         }
         foundFurniture = foundFurnitureColor;
       });
+      // Recorrer array de busqueda de muebles
       const transaction = new Transaction({
         type: req.body.type,
         furniture: foundFurniture,
-        customer: customer,
+        customer: customer._id,
       });
       const newTransaction = await transaction.save();
       return res.status(201).send(newTransaction);
