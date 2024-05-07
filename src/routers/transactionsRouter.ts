@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
-//import Provider from "../models/provider.js";
+import Provider from "../models/provider.js";
 
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
@@ -20,9 +20,9 @@ transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
   }
 });
 
-transactionsRouter.get("/customers/:dni", async (req: Request, res: Response) => {
+transactionsRouter.get("/transactions/:type", async (req: Request, res: Response) => {
   try {
-    const customer = await Customer.findOne({ dni: req.params.dni });
+    const customer = await Transaction.find({ type: req.params.type });
     if (customer) {
       return res.send(customer);
     } else {
@@ -34,9 +34,9 @@ transactionsRouter.get("/customers/:dni", async (req: Request, res: Response) =>
 });
 
 // GET a specific provider by ID
-transactionsRouter.get("/customers/:id", async (req, res) => {
+transactionsRouter.get("/transactions/:id", async (req, res) => {
   try {
-    const customer = await Customer.findOne({ id: req.params.id });
+    const customer = await Transaction.findOne({ id: req.params.id });
     if (customer) {
       return res.send(customer);
     } else {
@@ -48,13 +48,13 @@ transactionsRouter.get("/customers/:id", async (req, res) => {
 });
 
 // POST a new provider
-transactionsRouter.post("/customers", async (req, res) => {
+transactionsRouter.post("/transactions:dni", async (req, res) => {
   try {
-    const customers = new Transaction({
-      type: req.body.type,
-      furniture: req.body.furniture,
-      customer: req.body.customer,
-      provider: req.body.provider,
+    const customers = new Customer({
+      name: req.body.name,
+      contact: req.body.contact,
+      address: req.body.address,
+      dni: req.body.dni,
     });
     const newCustomer = await customers.save();
     return res.status(201).send(newCustomer);
