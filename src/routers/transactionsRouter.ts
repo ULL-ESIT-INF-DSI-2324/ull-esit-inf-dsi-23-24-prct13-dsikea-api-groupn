@@ -76,6 +76,8 @@ transactionsRouter.post("/transactions:dni", async (req, res) => {
         }
         if (foundFurnitureColor.quantity < item.quantity) {
           return res.status(400).send({ error: "Not enough furniture" });
+        } else {
+          Furniture.findOneAndUpdate({ _id: foundFurnitureColor._id }, { quantity: foundFurnitureColor.quantity - item.quantity });
         }
         foundFurniture.push([foundFurnitureColor._id, item.quantity]);
       });
