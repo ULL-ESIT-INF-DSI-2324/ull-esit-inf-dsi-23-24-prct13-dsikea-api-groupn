@@ -19,6 +19,7 @@ interface ITransaction extends Document {
   furniture: (typeof furnitureSchema)[];
   customer?: typeof customerSchema;
   provider?: typeof providerSchema;
+  totalPrice: number;
 }
 
 // Definición del esquema de transacción
@@ -36,25 +37,37 @@ export const transactionSchema = new Schema<ITransaction>({
         type: Number,
         required: true,
       },
-    }
+    },
   ],
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
-    dni: { type: String, required: true, validate: (value: string) => {
-      if(!value.match(/^\d{8}[A-Z]$/)){
+    dni: {
+      type: String,
+      required: true,
+      validate: (value: string) => {
+        if (!value.match(/^\d{8}[A-Z]$/)) {
           throw new Error("Invalid DNI"); // Ultima letra del dni de control
-      }
-    }},
+        }
+      },
+    },
   },
   provider: {
     type: Schema.Types.ObjectId,
     ref: "Provider",
-    cif: { type: String, required: true, validate: (value: string) => {
-      if(!value.match(/^[A-Z]{1}\d{8}$/)){
-        throw new Error("Invalid CIF"); // Ultima letra del cif de control
-      }
-    }},
+    cif: {
+      type: String,
+      required: true,
+      validate: (value: string) => {
+        if (!value.match(/^[A-Z]{1}\d{8}$/)) {
+          throw new Error("Invalid CIF"); // Ultima letra del cif de control
+        }
+      },
+    },
+  },
+  totalPrice: {
+    type: Number,
+    required: true,
   },
 });
 

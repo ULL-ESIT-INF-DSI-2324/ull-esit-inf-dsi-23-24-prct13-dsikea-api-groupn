@@ -1,8 +1,8 @@
-import express from 'express';
-import './db/mongoose.js';
-import { transactionsRouter } from './routers/transactionsRouter.js';
-import { customersRouter } from './routers/customersRouter.js';
-import { providerRouter } from './routers/providerRouter.js';
+import express from "express";
+import "./db/mongoose.js";
+import { transactionsRouter } from "./routers/transactionsRouter.js";
+import { customersRouter } from "./routers/customersRouter.js";
+import { providerRouter } from "./routers/providerRouter.js";
 
 const app = express();
 app.use(express.json());

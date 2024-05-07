@@ -20,31 +20,43 @@ interface ICustomer extends Document {
 
 export const customerSchema: Schema = new Schema<ICustomer>({
   name: { type: String, required: true },
-  contact: { type: String, required: true , validate: (value: string) => {
-      if(!value.match(/^\d{3} \d{3} \d{3}$/)){
+  contact: {
+    type: String,
+    required: true,
+    validate: (value: string) => {
+      if (!value.match(/^\d{3} \d{3} \d{3}$/)) {
         throw new Error("Invalid phone number");
       }
-    }
+    },
   },
-  email: { type: String, required: true, validate:(value: string) => {
-      if(!value.match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/)){
+  email: {
+    type: String,
+    required: true,
+    validate: (value: string) => {
+      if (!value.match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/)) {
         throw new Error("Invalid email");
       }
-    }
+    },
   },
-  address: { type: String, required: true, validate: (value: string) => {
+  address: {
+    type: String,
+    required: true,
+    validate: (value: string) => {
       // Comprobar esta y las demas regexps
-      if(!value.match(/^\d{1,5} \w{3,}\s\w{3,}\s\w{3,}$/)){
+      if (!value.match(/^\d{1,5} \w{3,}\s\w{3,}\s\w{3,}$/)) {
         throw new Error("Invalid address");
       }
-    }
+    },
   },
-  dni: { type: String, required: true, validate: (value: string) => {
-      if(!value.match(/^\d{8}[A-Z]$/)){
+  dni: {
+    type: String,
+    required: true,
+    validate: (value: string) => {
+      if (!value.match(/^\d{8}[A-Z]$/)) {
         throw new Error("Invalid DNI");
       }
-  }
-}
+    },
+  },
 });
 
 export default model<ICustomer>("Customer", customerSchema);

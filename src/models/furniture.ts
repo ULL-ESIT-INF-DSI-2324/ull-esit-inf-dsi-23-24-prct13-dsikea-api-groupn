@@ -60,7 +60,7 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
     type: String,
     enum: ["red", "blue", "green", "yellow", "black", "white", "brown"],
     required: true,
-  }
+  },
 });
 
 export default model<IFurniture>("Furniture", furnitureSchema);

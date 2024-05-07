@@ -120,7 +120,7 @@ furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
  * Maneja las solicitudes PATCH a la ruta "/furnitures".
  * Actualiza todos los muebles que coinciden con la consulta proporcionada con los datos proporcionados en el cuerpo de la solicitud.
  * Si no se encuentra ningún mueble, devuelve un error.
- * 
+ *
  * @note Manu explicame esto
  */
 furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {

@@ -131,15 +131,18 @@ customersRouter.delete("/customers/:dni", async (req, res) => {
 });
 
 // DELETE a provider by ID
-customersRouter.delete("/customers/:id", async (req: Request, res: Response) => {
-  try {
-    const customer = await Customer.findOneAndDelete({ _id: req.params.id });
-    if (customer) {
-      res.send({ message: "Customer deleted" });
-    } else {
-      res.status(404).send({ error: "Cutomer not found" });
+customersRouter.delete(
+  "/customers/:id",
+  async (req: Request, res: Response) => {
+    try {
+      const customer = await Customer.findOneAndDelete({ _id: req.params.id });
+      if (customer) {
+        res.send({ message: "Customer deleted" });
+      } else {
+        res.status(404).send({ error: "Cutomer not found" });
+      }
+    } catch (error) {
+      res.status(500).send(error);
     }
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
+  },
+);
