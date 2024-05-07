@@ -3,6 +3,7 @@ import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
 import Provider from "../models/provider.js";
 import Furniture from "../models/furniture.js";
+import { Schema } from "mongoose";
 //usar express no touters.
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
@@ -59,7 +60,7 @@ transactionsRouter.post("/transactions:dni", async (req, res) => {
         material: item.material,
         color: item.color,
       }));
-      let foundFurniture: any; // Añadir interfaz
+      const foundFurniture: [Schema.Types.ObjectId, number][] = []; // Añadir interfaz
       furniture.forEach(async (item: any) => { // Añadir interfaz de item
         const foundFurnitureName = await Furniture.find({ name: item.name });
         if (!foundFurnitureName) {
@@ -76,9 +77,10 @@ transactionsRouter.post("/transactions:dni", async (req, res) => {
         if (foundFurnitureColor.quantity < item.quantity) {
           return res.status(400).send({ error: "Not enough furniture" });
         }
-        foundFurniture = foundFurnitureColor;
+        foundFurniture.push([foundFurnitureColor._id, item.quantity]);
       });
       // Recorrer array de busqueda de muebles
+
       const transaction = new Transaction({
         type: req.body.type,
         furniture: foundFurniture,
