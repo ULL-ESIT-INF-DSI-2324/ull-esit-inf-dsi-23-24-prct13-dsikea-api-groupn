@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
-import Provider from "../models/provider.js";
+//import Provider from "../models/provider.js";
 
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
@@ -50,11 +50,11 @@ transactionsRouter.get("/customers/:id", async (req, res) => {
 // POST a new provider
 transactionsRouter.post("/customers", async (req, res) => {
   try {
-    const customers = new Customer({
-      name: req.body.name,
-      contact: req.body.contact,
-      address: req.body.address,
-      dni: req.body.dni,
+    const customers = new Transaction({
+      type: req.body.type,
+      furniture: req.body.furniture,
+      customer: req.body.customer,
+      provider: req.body.provider,
     });
     const newCustomer = await customers.save();
     return res.status(201).send(newCustomer);
