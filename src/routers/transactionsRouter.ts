@@ -2,7 +2,8 @@ import express, { Request, Response } from "express";
 import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
 import Provider from "../models/provider.js";
-
+import Furniture from "../models/furniture.js";
+//usar express no touters.
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
 
@@ -50,14 +51,42 @@ transactionsRouter.get("/transactions/:id", async (req, res) => {
 // POST a new provider
 transactionsRouter.post("/transactions:dni", async (req, res) => {
   try {
-    const customers = new Customer({
-      name: req.body.name,
-      contact: req.body.contact,
-      address: req.body.address,
-      dni: req.body.dni,
-    });
-    const newCustomer = await customers.save();
-    return res.status(201).send(newCustomer);
+    const customer = await Customer.findOne({ dni: req.params.dni });
+    if (customer) {
+      const furniture = req.body.furniture.map((item: any) => ({ // Añadir interfaz de item
+        quantity: item.quantity,
+        name: item.name,
+        material: item.material,
+        color: item.color,
+      }));
+      let foundFurniture: any; // Añadir interfaz
+      furniture.forEach(async (item: any) => { // Añadir interfaz de item
+        const foundFurnitureName = await Furniture.find({ name: item.name });
+        if (!foundFurnitureName) {
+          return res.status(404).send({ error: "Furniture name not found" });
+        }
+        const foundFurnitureMaterial = await Furniture.find({ name: item.name, material: item.material });
+        if (!foundFurnitureMaterial) {
+          return res.status(404).send({ error: "Furniture material not found", furnitures: foundFurnitureName });
+        }
+        const foundFurnitureColor = await Furniture.findOne({ name: item.name ,material: item.material, color: item.color });
+        if (!foundFurnitureColor) {
+          return res.status(404).send({ error: "Furniture color not found", furnitures: foundFurnitureMaterial });
+        }
+        if (foundFurnitureColor.quantity < item.quantity) {
+          return res.status(400).send({ error: "Not enough furniture" });
+        }
+        foundFurniture = foundFurnitureColor;
+      });
+      // Recorrer array de busqueda de muebles
+      const transaction = new Transaction({
+        type: req.body.type,
+        furniture: foundFurniture,
+        customer: customer._id,
+      });
+      const newTransaction = await transaction.save();
+      return res.status(201).send(newTransaction);
+    }
   } catch (error) {
     return res.status(500).send(error);
   }
