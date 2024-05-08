@@ -14,6 +14,49 @@ interface bodyTransFurniture {
   material: string;
   color: string;
 }
+// Función que busaca los ids de los muebles (La ppide en informe). MIrar tambien condiciones de las fechas y horas.
+function furnituresId(furnitures: bodyTransFurniture[]){
+  const foundFurniture: [Schema.Types.ObjectId, number][] = [];
+  let tPrice: number = 0;
+  furnitures.forEach(async (item: bodyTransFurniture) => {
+    const foundFurnitureName = await Furniture.find({ name: item.name });
+    if (!foundFurnitureName) {
+      return { error: "Furniture name not found" };
+    }
+    const foundFurnitureMaterial = await Furniture.find({
+      name: item.name,
+      material: item.material,
+    });
+    if (!foundFurnitureMaterial) {
+      return {
+          error: "Furniture material not found",
+          furnitures: foundFurnitureName,
+        };
+    }
+    const foundFurnitureColor = await Furniture.findOne({
+      name: item.name,
+      material: item.material,
+      color: item.color,
+    });
+    if (!foundFurnitureColor) {
+      return {
+          error: "Furniture color not found",
+          furnitures: foundFurnitureMaterial,
+        };
+    }
+    if (foundFurnitureColor.quantity < item.quantity) {
+      return { error: "Not enough furniture" };
+    } else {
+      Furniture.findOneAndUpdate(
+        { _id: foundFurnitureColor._id },
+        { quantity: foundFurnitureColor.quantity - item.quantity },
+      );
+    }
+    tPrice += foundFurnitureColor.price * item.quantity;
+    foundFurniture.push([foundFurnitureColor._id, item.quantity]);
+  });
+  return {foundFurniture, tPrice};
+}
 
 transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
   try {
@@ -114,6 +157,8 @@ transactionsRouter.post("/transactions:dni", async (req, res) => {
         type: req.body.type,
         furniture: foundFurniture,
         customer: customer._id,
+        time: req.body.time,
+        date: req.body.date,
         totalPrice: tPrice,
       });
       const newTransaction = await transaction.save();
@@ -177,6 +222,8 @@ transactionsRouter.post("/transactions:cif", async (req, res) => {
         type: req.body.type,
         furniture: foundFurniture,
         provider: provider._id,
+        time: req.body.time,
+        date: req.body.date,
         totalPrice: tPrice,
       });
       const newTransaction = await transaction.save();
@@ -187,17 +234,16 @@ transactionsRouter.post("/transactions:cif", async (req, res) => {
   }
 });
 
+// Actualizar transacciones
+
 //transactionsRouter.patch("/transactions:id", async (req, res) => {
-  
-//});
-
-//transactionsRouter.patch("/transactions/:cif", async (req, res) => {
-
-//});
-
-//transactionsRouter.patch("/transactions/:dni", async (req, res) => {
+//   if (!transaction) {
+//    return res.status(404).send({ error: "Transaction not found" });
+//  }
+//  const transaction = await Transaction.findOneAndUpdate({ _id: req.params.id });
 
 //});
+
 transactionsRouter.delete(
   "/transactions/:id",
   async (req: Request, res: Response) => {
