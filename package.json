@@ -22,6 +22,7 @@
     "@types/node": "^20.11.30",
     "@types/request": "^2.48.12",
     "@types/sinon": "^17.0.3",
+    "@types/validator": "^13.11.9",
     "@types/yargs": "^17.0.32",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
@@ -46,6 +47,7 @@
     "lowdb": "^1.0.0",
     "mongoose": "^8.3.2",
     "request": "^2.88.2",
+    "validator": "^13.11.0",
     "yargs": "^17.7.2"
   }
 }

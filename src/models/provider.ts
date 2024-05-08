@@ -1,4 +1,5 @@
 import { Document, connect, model, Schema } from "mongoose";
+import validator from 'validator';
 
 connect("mongodb://127.0.0.1:27017/providers")
   .then(() => {
@@ -22,29 +23,32 @@ export const providerSchema: Schema = new Schema<IProvider>({
   contact: {
     type: String,
     required: true,
-    validate: (value: string) => {
-      if (!value.match(/^\d{3} \d{3} \d{3}$/)) {
-        throw new Error("Invalid phone number");
-      }
-    },
+    validate: {
+      validator: (value: string) => {
+        return validator.isMobilePhone(value, 'any');
+      },
+      message: "Invalid phone number"
+    }
   },
   address: {
     type: String,
     required: true,
-    validate: (value: string) => {
-      if (!value.match(/^\d{1,5} \w{3,}\s\w{3,}\s\w{3,}$/)) {
-        throw new Error("Invalid address");
-      }
-    },
+    validate: {
+      validator: (value: string) => {
+        return validator.isPostalCode(value, 'any');
+      },
+      message: "Invalid address"
+    }
   },
   cif: {
     type: String,
     required: true,
-    validate: (value: string) => {
-      if (!value.match(/^[A-Z]{1}\d{8}$/)) {
-        throw new Error("Invalid CIF");
-      }
-    },
+    validate: {
+      validator: (value: string) => {
+        return validator.isAlphanumeric(value) && value.length === 9 && value[0] === value[0].toUpperCase();
+      },
+      message: "Invalid CIF"
+    }
   },
 });
 

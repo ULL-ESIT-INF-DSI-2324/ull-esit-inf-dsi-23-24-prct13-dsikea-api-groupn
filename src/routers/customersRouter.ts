@@ -52,6 +52,7 @@ customersRouter.post("/customers", async (req, res) => {
     const customers = new Customer({
       name: req.body.name,
       contact: req.body.contact,
+      email: req.body.email,
       address: req.body.address,
       dni: req.body.dni,
     });

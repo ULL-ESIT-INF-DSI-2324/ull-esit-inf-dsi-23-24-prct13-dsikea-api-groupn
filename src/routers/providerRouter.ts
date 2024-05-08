@@ -51,6 +51,7 @@ providerRouter.post("/providers", async (req, res) => {
   try {
     const provider = new Provider({
       name: req.body.name,
+      contact: req.body.contact,
       address: req.body.address,
       cif: req.body.cif,
     });

@@ -107,6 +107,11 @@ const findFurniture = async (furniture: FurnitureReqI[], res: Response) => {
 //   return { foundFurniture, tPrice };
 // }
 
+// Default route
+transactionsRouter.get("/", (req: Request, res: Response) => {
+  res.status(404).send({ error: "Route not found" });
+});
+
 // GET all providers
 transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
   try {
@@ -151,6 +156,10 @@ transactionsRouter.get("/transactions/:id", async (req, res) => {
   }
 });
 
+transactionsRouter.post("/transactions", async (req, res) => {
+  return res.status(404).send({ error: "Juan P" });
+});
+
 /**
  * POST a new transaction
  * @route POST /transactions/:dni
@@ -158,7 +167,7 @@ transactionsRouter.get("/transactions/:id", async (req, res) => {
  * @param res - The response object
  * @returns The created transaction object
  */
-transactionsRouter.post("/transactions/:dni", async (req, res) => {
+transactionsRouter.post("/transactions/customer/:dni", async (req, res) => {
   try {
     // Find the customer by dni
     const customer = await Customer.findOne({ dni: req.params.dni });
@@ -188,6 +197,19 @@ transactionsRouter.post("/transactions/:dni", async (req, res) => {
       // Save the transaction to the database
       const newTransaction = await transaction.save();
 
+      // Subtract the quantity of the furniture from the database
+      for (const item of furniture) {
+        const foundFurnitureColor = await Furniture.findOne({
+          name: item.name,
+          material: item.material,
+          color: item.color,
+        });
+        if (foundFurnitureColor != null) {
+          foundFurnitureColor.quantity -= item.quantity;
+          await foundFurnitureColor.save();
+        }
+      }
+
       // Return the created transaction object
       return res.status(201).send(newTransaction);
     }
@@ -203,7 +225,7 @@ transactionsRouter.post("/transactions/:dni", async (req, res) => {
  * @param res - The response object
  * @returns The created transaction object
  */
-transactionsRouter.post("/transactions/:cif", async (req, res) => {
+transactionsRouter.post("/transactions/provider/:cif", async (req, res) => {
   try {
     // Find the provider by cif
     const provider = await Provider.findOne({ cif: req.params.cif });
