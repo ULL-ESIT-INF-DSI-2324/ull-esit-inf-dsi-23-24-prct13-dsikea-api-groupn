@@ -44,7 +44,6 @@ transactionsRouter.get(
   },
 );
 
-// GET a specific provider by ID
 transactionsRouter.get("/transactions/:id", async (req, res) => {
   try {
     const customer = await Transaction.findOne({ id: req.params.id });
@@ -188,74 +187,17 @@ transactionsRouter.post("/transactions:cif", async (req, res) => {
   }
 });
 
-transactionsRouter.patch("/customers:contact", async (req, res) => {
-  try {
-    const allowedUpdates = ["name", "contact", "address", "dni"];
-    const actualUpdates = Object.keys(req.body);
-    const isValidUpdate = actualUpdates.every((update) =>
-      allowedUpdates.includes(update),
-    );
+//transactionsRouter.patch("/transactions:id", async (req, res) => {
+  
+//});
 
-    if (!isValidUpdate) {
-      return res.status(400).send({
-        error: "Update is not permitted",
-      });
-    }
-    const customer = await Customer.findOneAndUpdate(
-      { contact: req.params.contact },
-      req.body,
-      { new: true, runValidators: true },
-    );
-    if (customer) {
-      return res.send(customer);
-    }
-    return res.status(404).send({ error: "Customer not found" });
-  } catch (error) {
-    return res.status(400).send(error);
-  }
-});
+//transactionsRouter.patch("/transactions/:cif", async (req, res) => {
 
-transactionsRouter.patch("/customers/:id", async (req, res) => {
-  try {
-    const allowedUpdates = ["name", "contact", "address", "dni"];
-    const actualUpdates = Object.keys(req.body);
-    const isValidUpdate = actualUpdates.every((update) =>
-      allowedUpdates.includes(update),
-    );
+//});
 
-    if (!isValidUpdate) {
-      return res.status(400).send({
-        error: "Update is not permitted",
-      });
-    }
-    const provider = await Customer.findOneAndUpdate(
-      { id: req.params.id },
-      req.body,
-      { new: true, runValidators: true },
-    );
-    if (provider) {
-      return res.send(provider);
-    }
-    return res.status(404).send({ error: "Customer not found" });
-  } catch (error) {
-    return res.status(400).send(error);
-  }
-});
+//transactionsRouter.patch("/transactions/:dni", async (req, res) => {
 
-// DELETE a provider by CIF
-transactionsRouter.delete("/customers/:dni", async (req, res) => {
-  try {
-    const provider = await Customer.findOneAndDelete({ dni: req.params.dni });
-    if (provider) {
-      res.send({ message: "Customer deleted" });
-    } else {
-      res.status(404).send({ error: "Customer not found" });
-    }
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
+//});
 transactionsRouter.delete(
   "/transactions/:id",
   async (req: Request, res: Response) => {
