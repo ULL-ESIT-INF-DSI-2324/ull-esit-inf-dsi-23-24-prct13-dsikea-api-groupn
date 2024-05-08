@@ -13,15 +13,16 @@ connect("mongodb://127.0.0.1:27017/transactions")
     );
   });
 
-// Definición de la interfaz para el documento de transacción
 interface ITransaction extends Document {
   type: "Compra" | "Venta";
   furniture: (typeof furnitureSchema)[];
   customer?: typeof customerSchema;
   provider?: typeof providerSchema;
+  date: Date;
+  time: string;
+  totalPrice: number;
 }
 
-// Definición del esquema de transacción
 export const transactionSchema = new Schema<ITransaction>({
   type: {
     type: String,
@@ -61,5 +62,4 @@ export const transactionSchema = new Schema<ITransaction>({
   },
 });
 
-// Creación del modelo de transacción
 export default model<ITransaction>("Transaction", transactionSchema);
