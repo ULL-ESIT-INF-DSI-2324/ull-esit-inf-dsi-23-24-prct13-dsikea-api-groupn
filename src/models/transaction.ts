@@ -32,29 +32,32 @@ export const transactionSchema = new Schema<ITransaction>({
     {
       type: Schema.Types.ObjectId,
       ref: "Furniture",
-      quantity: {
-        type: Number,
-        required: true,
-      },
+      // Se supone que esto como tal ya viene definido en la clase furniture.
+      // quantity: {
+      //   type: Number,
+      //   required: true,
+      // },
     }
   ],
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
-    dni: { type: String, required: true, validate: (value: string) => {
-      if(!value.match(/^\d{8}[A-Z]$/)){
-          throw new Error("Invalid DNI"); // Ultima letra del dni de control
-      }
-    }},
+    // Ya viene definido en la clase customer
+    // dni: { type: String, required: true, validate: (value: string) => {
+    //   if(!value.match(/^\d{8}[A-Z]$/)){
+    //       throw new Error("Invalid DNI"); // Ultima letra del dni de control
+    //   }
+    // }},
   },
   provider: {
     type: Schema.Types.ObjectId,
     ref: "Provider",
-    cif: { type: String, required: true, validate: (value: string) => {
-      if(!value.match(/^[A-Z]{1}\d{8}$/)){
-        throw new Error("Invalid CIF"); // Ultima letra del cif de control
-      }
-    }},
+    // Ya viene definido en la clase Provider
+    // cif: { type: String, required: true, validate: (value: string) => {
+    //   if(!value.match(/^[A-Z]{1}\d{8}$/)){
+    //     throw new Error("Invalid CIF"); // Ultima letra del cif de control
+    //   }
+    // }},
   },
 });
 
