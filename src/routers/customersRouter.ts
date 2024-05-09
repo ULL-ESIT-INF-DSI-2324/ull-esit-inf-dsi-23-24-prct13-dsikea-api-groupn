@@ -27,16 +27,20 @@ customersRouter.get("/customers", async (__, res: Response) => {
  * @param {string} dni - The DNI of the customer.
  * @returns {Response} - The customer with the specified DNI.
  */
-customersRouter.get("/customers/:dni", async (req: Request, res: Response) => {
-  try {
-    const customer = await Customer.findOne({ dni: req.params.dni });
-    if (customer) {
-      return res.send(customer);
-    } else {
-      return res.status(404).send({ error: "Customer not found" });
+customersRouter.get("/customers", async (req: Request, res: Response) => {
+  if (req.query.dni) {
+    try {
+      const customer = await Customer.findOne({ dni: req.params.dni });
+      if (customer) {
+        return res.send(customer);
+      } else {
+        return res.status(404).send({ error: "Customer not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
     }
-  } catch (error) {
-    return res.status(500).send(error);
+  } else {
+    return res.status(404).send({ error: "You must put dni in the body" });
   }
 });
 
@@ -81,39 +85,6 @@ customersRouter.post("/customers", async (req, res) => {
 });
 
 /**
- * Update customer contact information.
- * @param {Request} req - The request object containing updated contact information.
- * @param {Response} res - The response object.
- * @returns {Response} - The updated customer.
- */
-customersRouter.patch("/customers:contact", async (req, res) => {
-  try {
-    const allowedUpdates = ["name", "contact", "postalCode", "dni"];
-    const actualUpdates = Object.keys(req.body);
-    const isValidUpdate = actualUpdates.every((update) =>
-      allowedUpdates.includes(update),
-    );
-
-    if (!isValidUpdate) {
-      return res.status(400).send({
-        error: "Update is not permitted",
-      });
-    }
-    const customer = await Customer.findOneAndUpdate(
-      { contact: req.params.contact },
-      req.body,
-      { new: true, runValidators: true },
-    );
-    if (customer) {
-      return res.send(customer);
-    }
-    return res.status(404).send({ error: "Customer not found" });
-  } catch (error) {
-    return res.status(400).send(error);
-  }
-});
-
-/**
  * Update customer information by ID.
  * @param {Request} req - The request object containing updated customer information.
  * @param {Response} res - The response object.
@@ -146,22 +117,57 @@ customersRouter.patch("/customers/:id", async (req, res) => {
   }
 });
 
+customersRouter.patch("/customers", async (req, res) => {
+  if (req.query.dni) {
+    try {
+      const allowedUpdates = ["name", "contact", "postalCode", "dni"];
+      const actualUpdates = Object.keys(req.body);
+      const isValidUpdate = actualUpdates.every((update) =>
+        allowedUpdates.includes(update),
+      );
+
+      if (!isValidUpdate) {
+        return res.status(400).send({
+          error: "Update is not permitted",
+        });
+      }
+      const customer = await Customer.findOneAndUpdate(
+        { dni: req.query.dni },
+        req.body,
+        { new: true, runValidators: true },
+      );
+      if (customer) {
+        return res.send(customer);
+      }
+      return res.status(404).send({ error: "Customer not found" });
+    } catch (error) {
+      return res.status(400).send(error);
+    }
+  } else {
+    return res.status(404).send({ error: "You must put dni in the body" });
+  }
+});
+
 /**
  * Delete a customer by DNI.
  * @param {Request} req - The request object containing the DNI of the customer to be deleted.
  * @param {Response} res - The response object.
  * @returns {Response} - Success message if the customer is deleted, otherwise error message.
  */
-customersRouter.delete("/customers/:dni", async (req, res) => {
-  try {
-    const provider = await Customer.findOneAndDelete({ dni: req.params.dni });
-    if (provider) {
-      res.send({ message: "Customer deleted" });
-    } else {
-      res.status(404).send({ error: "Customer not found" });
+customersRouter.delete("/customers", async (req, res) => {
+  if (req.query.dni) {
+    try {
+      const provider = await Customer.findOneAndDelete({ dni: req.query.dni });
+      if (provider) {
+        res.send({ message: "Customer deleted" });
+      } else {
+        res.status(404).send({ error: "Customer not found" });
+      }
+    } catch (error) {
+      res.status(500).send(error);
     }
-  } catch (error) {
-    res.status(500).send(error);
+  } else {
+    return res.status(404).send({ error: "You must put dni in the body" });
   }
 });
 

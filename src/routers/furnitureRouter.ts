@@ -223,7 +223,9 @@ furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
               res.json({ message: "Furniture deleted successfully" });
             })
             .catch(() => {
-              res.status(500).json({ message: "Error when deleting furniture" });
+              res
+                .status(500)
+                .json({ message: "Error when deleting furniture" });
             });
         } else {
           res.status(500).json({
