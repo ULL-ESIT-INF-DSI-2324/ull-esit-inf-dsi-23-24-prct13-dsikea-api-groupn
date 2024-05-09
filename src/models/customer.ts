@@ -1,5 +1,5 @@
 import { Document, model, Schema } from "mongoose";
-import validator from 'validator';
+import validator from "validator";
 
 interface ICustomer extends Document {
   name: string;
