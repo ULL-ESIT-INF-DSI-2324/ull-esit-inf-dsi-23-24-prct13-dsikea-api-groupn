@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import "./db/mongoose.js";
 import furniture from "../models/furniture.js";
 import { furnitureSchema } from "../models/furniture.js";
 

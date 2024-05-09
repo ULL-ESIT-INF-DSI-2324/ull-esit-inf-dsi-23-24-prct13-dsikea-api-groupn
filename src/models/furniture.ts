@@ -1,15 +1,15 @@
 import { Document, connect, model, Schema } from "mongoose";
 // import validator from 'validator';
 
-connect("mongodb://127.0.0.1:27017/furnitures")
-  .then(() => {
-    console.log("Connected to the furnitures database");
-  })
-  .catch(() => {
-    console.log(
-      "Something went wrong when conecting to the furnitures database",
-    );
-  });
+// connect("mongodb://127.0.0.1:27017/furnitures")
+//   .then(() => {
+//     console.log("Connected to the furnitures database");
+//   })
+//   .catch(() => {
+//     console.log(
+//       "Something went wrong when conecting to the furnitures database",
+//     );
+//   });
 
 type Dimension = {
   length: number;
@@ -17,7 +17,7 @@ type Dimension = {
   height: number;
 };
 
-interface IFurniture extends Document {
+export interface IFurniture extends Document {
   name: string;
   description: string;
   material: string;

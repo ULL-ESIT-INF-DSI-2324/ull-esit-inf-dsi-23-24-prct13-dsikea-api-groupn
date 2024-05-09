@@ -15,7 +15,7 @@ interface ICustomer extends Document {
   name: string;
   contact: string;
   email: string;
-  address: string;
+  postalCode: string;
   dni: string;
 }
 
@@ -37,7 +37,7 @@ export const customerSchema: Schema = new Schema<ICustomer>({
       message: "Invalid email",
     },
   },
-  address: {
+  postalCode: {
     type: String,
     required: true,
     validate: {
