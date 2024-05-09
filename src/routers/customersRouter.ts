@@ -6,23 +6,6 @@ export const customersRouter = express.Router();
 customersRouter.use(express.json());
 
 /**
- * GET all customers.
- * @returns {Response} - List of all customers.
- */
-customersRouter.get("/customers", async (__, res: Response) => {
-  try {
-    const customers = await Customer.find();
-    if (customers) {
-      return res.send(customers);
-    } else {
-      return res.status(404).send({ error: "Customers not found" });
-    }
-  } catch (error) {
-    return res.status(500).send(error);
-  }
-});
-
-/**
  * GET a customer by DNI.
  * @param {string} dni - The DNI of the customer.
  * @returns {Response} - The customer with the specified DNI.
@@ -40,7 +23,16 @@ customersRouter.get("/customers", async (req: Request, res: Response) => {
       return res.status(500).send(error);
     }
   } else {
-    return res.status(404).send({ error: "You must put dni in the body" });
+    try {
+      const customers = await Customer.find();
+      if (customers) {
+        return res.send(customers);
+      } else {
+        return res.status(404).send({ error: "Customers not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
+    }
   }
 });
 

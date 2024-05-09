@@ -5,30 +5,29 @@ import Provider from "../models/provider.js";
 export const providerRouter = express.Router();
 providerRouter.use(express.json());
 
-// GET all providers
 providerRouter.get("/providers", async (req: Request, res: Response) => {
-  try {
-    const providers = await Provider.find();
-    if (providers) {
-      return res.send(providers);
-    } else {
-      return res.status(404).send({ error: "Providers not found" });
+  if (req.query.cif) {
+    try {
+      const provider = await Provider.findOne({ cif: req.params.cif });
+      if (provider) {
+        return res.send(provider);
+      } else {
+        return res.status(404).send({ error: "Provider not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
     }
-  } catch (error) {
-    return res.status(500).send(error);
-  }
-});
-
-providerRouter.get("/providers/:cif", async (req: Request, res: Response) => {
-  try {
-    const provider = await Provider.findOne({ cif: req.params.cif });
-    if (provider) {
-      return res.send(provider);
-    } else {
-      return res.status(404).send({ error: "Provider not found" });
+  } else {
+    try {
+      const providers = await Provider.find();
+      if (providers) {
+        return res.send(providers);
+      } else {
+        return res.status(404).send({ error: "Providers not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
     }
-  } catch (error) {
-    return res.status(500).send(error);
   }
 });
 
@@ -62,30 +61,34 @@ providerRouter.post("/providers", async (req, res) => {
   }
 });
 
-providerRouter.patch("/providers:cif", async (req, res) => {
-  try {
-    const allowedUpdates = ["name", "contact", "postalCode", "cif"];
-    const actualUpdates = Object.keys(req.body);
-    const isValidUpdate = actualUpdates.every((update) =>
-      allowedUpdates.includes(update),
-    );
+providerRouter.patch("/providers", async (req, res) => {
+  if (req.query.cif) {
+    try {
+      const allowedUpdates = ["name", "contact", "postalCode", "cif"];
+      const actualUpdates = Object.keys(req.body);
+      const isValidUpdate = actualUpdates.every((update) =>
+        allowedUpdates.includes(update),
+      );
 
-    if (!isValidUpdate) {
-      return res.status(400).send({
-        error: "Update is not permitted",
-      });
+      if (!isValidUpdate) {
+        return res.status(400).send({
+          error: "Update is not permitted",
+        });
+      }
+      const provider = await Provider.findOneAndUpdate(
+        { cif: req.query.cif },
+        req.body,
+        { new: true, runValidators: true },
+      );
+      if (provider) {
+        return res.send(provider);
+      }
+      return res.status(404).send({ error: "Provider not found" });
+    } catch (error) {
+      return res.status(400).send(error);
     }
-    const provider = await Provider.findOneAndUpdate(
-      { cif: req.params.cif },
-      req.body,
-      { new: true, runValidators: true },
-    );
-    if (provider) {
-      return res.send(provider);
-    }
-    return res.status(404).send({ error: "Provider not found" });
-  } catch (error) {
-    return res.status(400).send(error);
+  } else {
+    return res.status(404).send({ error: "You must put cif in the body" });
   }
 });
 
@@ -117,16 +120,20 @@ providerRouter.patch("/providers/:id", async (req, res) => {
 });
 
 // DELETE a provider by CIF
-providerRouter.delete("/providers/:cif", async (req, res) => {
-  try {
-    const provider = await Provider.findOneAndDelete({ cif: req.params.cif });
-    if (provider) {
-      res.send({ message: "Provider deleted" });
-    } else {
-      res.status(404).send({ error: "Provider not found" });
+providerRouter.delete("/providers", async (req, res) => {
+  if (req.query.cif) {
+    try {
+      const provider = await Provider.findOneAndDelete({ cif: req.query.cif });
+      if (provider) {
+        res.send({ message: "Provider deleted" });
+      } else {
+        res.status(404).send({ error: "Provider not found" });
+      }
+    } catch (error) {
+      res.status(500).send(error);
     }
-  } catch (error) {
-    res.status(500).send(error);
+  } else {
+    res.status(404).send({ error: "You must put cif in the body" });
   }
 });
 
