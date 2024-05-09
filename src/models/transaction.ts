@@ -1,4 +1,4 @@
-import { Schema, connect, model, Document } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 import { customerSchema } from "./customer.js";
 import { providerSchema } from "./provider.js";
 import { furnitureSchema } from "./furniture.js";

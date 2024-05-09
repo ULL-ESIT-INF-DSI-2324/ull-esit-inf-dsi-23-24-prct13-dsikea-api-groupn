@@ -1,15 +1,5 @@
-import { Document, connect, model, Schema } from "mongoose";
+import { Document, model, Schema } from "mongoose";
 import validator from 'validator';
-
-// connect("mongodb://127.0.0.1:27017/providers")
-//   .then(() => {
-//     console.log("Connected to the providers database");
-//   })
-//   .catch(() => {
-//     console.log(
-//       "Something went wrong when conecting to the providers database",
-//     );
-//   });
 
 interface IProvider extends Document {
   name: string;

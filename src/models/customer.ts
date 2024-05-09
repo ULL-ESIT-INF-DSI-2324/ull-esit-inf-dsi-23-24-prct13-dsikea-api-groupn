@@ -1,15 +1,5 @@
-import { Document, connect, model, Schema } from "mongoose";
+import { Document, model, Schema } from "mongoose";
 import validator from 'validator';
-
-connect("mongodb://127.0.0.1:27017/customers")
-  .then(() => {
-    console.log("Connected to the customers database");
-  })
-  .catch(() => {
-    console.log(
-      "Something went wrong when conecting to the customers database",
-    );
-  });
 
 interface ICustomer extends Document {
   name: string;
