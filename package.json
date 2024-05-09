@@ -1,12 +1,12 @@
 {
-  "name": "p09-filesystem-magic-app",
+  "name": "p13-dsi-ikea",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "tsc-watch --onSuccess \"node dist/src/index.js\"",
-    "test": "mocha ./test/*.spec.ts",
+    "test": "mocha --exit",
     "coverage": "c8 npm test && c8 report --reporter=lcov",
     "doc": "typedoc --out docs src/**/*.ts; touch docs/.nojekyll"
   },
@@ -22,11 +22,8 @@
     "@types/node": "^20.11.30",
     "@types/request": "^2.48.12",
     "@types/sinon": "^17.0.3",
-<<<<<<< HEAD
     "@types/supertest": "^6.0.2",
-=======
     "@types/validator": "^13.11.9",
->>>>>>> 5e640fd4c9363f0b54f2569d59373f83c7ec164c
     "@types/yargs": "^17.0.32",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
