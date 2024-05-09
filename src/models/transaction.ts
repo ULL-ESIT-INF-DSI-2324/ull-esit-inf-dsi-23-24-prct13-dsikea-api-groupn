@@ -3,9 +3,14 @@ import { customerSchema } from "./customer.js";
 import { providerSchema } from "./provider.js";
 import { furnitureSchema } from "./furniture.js";
 
+export interface FurnitureTuple {
+  furniture: typeof furnitureSchema;
+  quantity: number;
+}
+
 interface ITransaction extends Document {
   type: "Purchase" | "Sale";
-  furniture: (typeof furnitureSchema)[];
+  furniture: FurnitureTuple[];
   customer?: typeof customerSchema;
   provider?: typeof providerSchema;
   date: Date;
@@ -20,8 +25,15 @@ export const transactionSchema = new Schema<ITransaction>({
   },
   furniture: [
     {
-      type: Schema.Types.ObjectId,
-      ref: "Furniture",
+      furniture: {
+        type: Schema.Types.ObjectId,
+        ref: "Furniture",
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+      },
     },
   ],
   customer: {
