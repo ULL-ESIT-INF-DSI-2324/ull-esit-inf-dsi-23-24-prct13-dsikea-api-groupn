@@ -51,7 +51,8 @@ providerRouter.post("/providers", async (req, res) => {
   try {
     const provider = new Provider({
       name: req.body.name,
-      address: req.body.address,
+      contact: req.body.contact,
+      postalCode: req.body.postalCode,
       cif: req.body.cif,
     });
     const newProvider = await provider.save();
@@ -63,7 +64,7 @@ providerRouter.post("/providers", async (req, res) => {
 
 providerRouter.patch("/providers:cif", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "address", "cif"];
+    const allowedUpdates = ["name", "contact", "postalCode", "cif"];
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),
@@ -90,7 +91,7 @@ providerRouter.patch("/providers:cif", async (req, res) => {
 
 providerRouter.patch("/providers/:id", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "address", "cif"];
+    const allowedUpdates = ["name", "contact", "postalCode", "cif"];
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),

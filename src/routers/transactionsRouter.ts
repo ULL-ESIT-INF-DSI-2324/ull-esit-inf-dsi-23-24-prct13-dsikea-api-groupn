@@ -17,14 +17,18 @@ interface FurnitureReqI {
   color: string;
 }
 
-const findFurniture = async (furniture: FurnitureReqI[], res: Response) => {
-  const foundFurniture = [];
+const findFurniture = async (
+  furniture: FurnitureReqI[],
+  res: Response,
+): Promise<FurnitureReqI[]> => {
+  const foundFurniture: FurnitureReqI[] = [];
   // Check if the furniture exists and has enough quantity
   for (const item of furniture) {
     // Check if the furniture name exists
     const foundFurnitureName = await Furniture.findOne({ name: item.name });
     if (!foundFurnitureName) {
-      return res.status(404).send({ error: "Furniture name not found" });
+      res.status(404).send({ error: "Furniture name not found" });
+      return [];
     }
 
     // Check if the furniture material exists
@@ -33,10 +37,11 @@ const findFurniture = async (furniture: FurnitureReqI[], res: Response) => {
       material: item.material,
     });
     if (!foundFurnitureMaterial) {
-      return res.status(404).send({
+      res.status(404).send({
         error: "Furniture material not found",
         furnitures: foundFurnitureName,
       });
+      return [];
     }
 
     // Check if the furniture color exists
@@ -46,66 +51,32 @@ const findFurniture = async (furniture: FurnitureReqI[], res: Response) => {
       color: item.color,
     });
     if (!foundFurnitureColor) {
-      return res.status(404).send({
+      res.status(404).send({
         error: "Furniture color not found",
         furnitures: foundFurnitureMaterial,
       });
+      return [];
     }
 
     // Check if there is enough quantity of the furniture
     if (foundFurnitureColor.quantity < item.quantity) {
-      return res.status(400).send({ error: "Not enough furniture" });
+      res.status(400).send({ error: "Not enough quantity furniture" });
+      return [];
     }
 
-    // Push the furniture id to the foundFurniture array
-    foundFurniture.push(foundFurnitureColor._id);
+    // Push the furniture object to the foundFurniture array
+    foundFurniture.push({
+      quantity: item.quantity,
+      name: item.name,
+      description: item.description,
+      material: item.material,
+      dimensions: item.dimensions,
+      price: item.price,
+      color: item.color,
+    });
   }
   return foundFurniture;
 };
-
-// Función que busaca los ids de los muebles (La pide en informe). MIrar tambien condiciones de las fechas y horas.
-// function furnituresId(furnitures: FurnitureReqI[]) {
-//   const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-//   let tPrice: number = 0;
-//   furnitures.forEach(async (item: FurnitureReqI) => {
-//     const foundFurnitureName = await Furniture.find({ name: item.name });
-//     if (!foundFurnitureName) {
-//       return { error: "Furniture name not found" };
-//     }
-//     const foundFurnitureMaterial = await Furniture.find({
-//       name: item.name,
-//       material: item.material,
-//     });
-//     if (!foundFurnitureMaterial) {
-//       return {
-//         error: "Furniture material not found",
-//         furnitures: foundFurnitureName,
-//       };
-//     }
-//     const foundFurnitureColor = await Furniture.findOne({
-//       name: item.name,
-//       material: item.material,
-//       color: item.color,
-//     });
-//     if (!foundFurnitureColor) {
-//       return {
-//         error: "Furniture color not found",
-//         furnitures: foundFurnitureMaterial,
-//       };
-//     }
-//     if (foundFurnitureColor.quantity < item.quantity) {
-//       return { error: "Not enough furniture" };
-//     } else {
-//       Furniture.findOneAndUpdate(
-//         { _id: foundFurnitureColor._id },
-//         { quantity: foundFurnitureColor.quantity - item.quantity },
-//       );
-//     }
-//     tPrice += foundFurnitureColor.price * item.quantity;
-//     foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-//   });
-//   return { foundFurniture, tPrice };
-// }
 
 // GET all providers
 transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
@@ -158,7 +129,7 @@ transactionsRouter.get("/transactions/:id", async (req, res) => {
  * @param res - The response object
  * @returns The created transaction object
  */
-transactionsRouter.post("/transactions/:dni", async (req, res) => {
+transactionsRouter.post("/transactions/customer/:dni", async (req, res) => {
   try {
     // Find the customer by dni
     const customer = await Customer.findOne({ dni: req.params.dni });
@@ -169,24 +140,52 @@ transactionsRouter.post("/transactions/:dni", async (req, res) => {
         name: item.name,
         material: item.material,
         color: item.color,
+        price: item.price,
       }));
 
-      const foundFurniture = await findFurniture(furniture, res);
+      const foundFurniture: FurnitureReqI[] = await findFurniture(
+        furniture,
+        res,
+      );
 
       // Check if any furniture was found
       if (!foundFurniture) {
         return res.status(404).send({ error: "Furniture not found" });
       }
 
+      let totalPrice = 0;
+      // Calculate the total price
+      foundFurniture.forEach(async (item: FurnitureReqI) => {
+        const furniture = await Furniture.findById(item);
+        if (furniture) {
+          totalPrice += furniture.price * furniture.quantity;
+        }
+      });
+
       // Create a new transaction object
       const transaction = new Transaction({
         type: req.body.type,
         furniture: foundFurniture,
         customer: customer._id,
+        date: new Date(),
+        price: totalPrice,
       });
 
       // Save the transaction to the database
       const newTransaction = await transaction.save();
+
+      // Subtract the quantity of the furniture from the database
+      for (const item of furniture) {
+        const foundFurnitureColor = await Furniture.findOne({
+          name: item.name,
+          material: item.material,
+          color: item.color,
+        });
+        if (foundFurnitureColor != null) {
+          foundFurnitureColor.quantity -= item.quantity;
+          await foundFurnitureColor.save();
+        }
+      }
 
       // Return the created transaction object
       return res.status(201).send(newTransaction);
@@ -203,7 +202,7 @@ transactionsRouter.post("/transactions/:dni", async (req, res) => {
  * @param res - The response object
  * @returns The created transaction object
  */
-transactionsRouter.post("/transactions/:cif", async (req, res) => {
+transactionsRouter.post("/transactions/provider/:cif", async (req, res) => {
   try {
     // Find the provider by cif
     const provider = await Provider.findOne({ cif: req.params.cif });
@@ -220,6 +219,7 @@ transactionsRouter.post("/transactions/:cif", async (req, res) => {
       }));
 
       const furnitureIDs = [];
+      let totalPrice = 0;
       // Create and save the furniture objects or update existing ones
       for (const item of furniture) {
         // Check if the furniture already exists
@@ -243,6 +243,7 @@ transactionsRouter.post("/transactions/:cif", async (req, res) => {
           // Push the furniture id to the furnitureToCreate array
           furnitureIDs.push(savedFurniture._id);
         }
+        totalPrice += item.price * item.quantity;
       }
 
       // Create a new transaction object
@@ -250,6 +251,8 @@ transactionsRouter.post("/transactions/:cif", async (req, res) => {
         type: req.body.type,
         furniture: furnitureIDs,
         provider: provider._id,
+        date: new Date(),
+        price: totalPrice,
       });
       // Save the transaction to the database
       const newTransaction = await transaction.save();

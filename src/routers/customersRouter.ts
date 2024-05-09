@@ -52,7 +52,8 @@ customersRouter.post("/customers", async (req, res) => {
     const customers = new Customer({
       name: req.body.name,
       contact: req.body.contact,
-      address: req.body.address,
+      email: req.body.email,
+      postalCode: req.body.postalCode,
       dni: req.body.dni,
     });
     const newCustomer = await customers.save();
@@ -64,7 +65,7 @@ customersRouter.post("/customers", async (req, res) => {
 
 customersRouter.patch("/customers:contact", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "address", "dni"];
+    const allowedUpdates = ["name", "contact", "postalCode", "dni"];
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),
@@ -91,7 +92,7 @@ customersRouter.patch("/customers:contact", async (req, res) => {
 
 customersRouter.patch("/customers/:id", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "address", "dni"];
+    const allowedUpdates = ["name", "contact", "postalCode", "dni"];
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),
