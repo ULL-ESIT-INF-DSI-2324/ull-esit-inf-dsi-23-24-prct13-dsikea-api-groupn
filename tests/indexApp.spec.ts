@@ -10,3 +10,12 @@ describe('POST /users', () => {
     }).expect(201);
   });
 });
+
+let fornuture, customer, providers, transactions;
+
+beforeEach(async () => {
+  fornuture = await createFornuture();
+  customer = await createCustomer();
+  providers = await createProviders();
+  transactions = await createTransactions();
+});

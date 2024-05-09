@@ -274,6 +274,29 @@ transactionsRouter.post("/transactions/provider/:cif", async (req, res) => {
 
 //});
 
+//haz el modify de trasactuons router
+
+
+
+transactionsRouter.patch("/transactions" ,  async (req: Request, res: Response) => {
+  try {
+    const transaction = await Transaction.findOneAndUpdate({ _id: req.body.id } , req.body);
+    if (transaction) {
+      res.status(200).send(transaction);  
+    } else {
+      res.status(404).send({ error: "Transaction not found" });
+    }
+  } catch (error) {
+    res.status( 500).send(error );
+  }
+},
+);
+
+
+
+
+
+
 transactionsRouter.delete(
   "/transactions/:id",
   async (req: Request, res: Response) => {
