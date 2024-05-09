@@ -1,9 +1,19 @@
 import express, { Request, Response } from "express";
-import furniture from "../models/furniture.js";
+import Furniture from "../models/furniture.js";
 import { furnitureSchema } from "../models/furniture.js";
 
 export const furnitureRouter = express.Router();
 furnitureRouter.use(express.json());
+
+// interface FurnitureReqI {
+//   quantity: number;
+//   name: string;
+//   description: string;
+//   material: string;
+//   dimensions: string;
+//   price: number;
+//   color: string;
+// }
 
 /**
  * Checks if the keys in the request query match the keys in the furniture schema.
@@ -22,13 +32,13 @@ function checkFurnitureQuery(req: Request) {
 }
 
 /**
- * GET all furnitures.
+ * GET all furnitures. Or search furnitures by name, description, material, price...
  * @returns {Response} - List of all furnitures.
  */
 furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
   if (req.query) {
     if (checkFurnitureQuery(req)) {
-      furniture
+      Furniture
         .find(req.query)
         .then((furnitures) => {
           res.json(furnitures);
@@ -56,7 +66,7 @@ furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
  */
 furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
-  furniture
+  Furniture
     .findById(id)
     .then((furniture) => {
       if (furniture) {
@@ -78,7 +88,22 @@ furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
  */
 furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
   // Hacer interfaz y añadir cantidad igual 0.
-  const newFurniture = new furniture(req.body);
+  if (req.body.quantity) {
+    res.status(400).json({
+      message:
+        "You cannot add a piece of furniture with quantity, to do so you must make a transaction",
+    });
+  }
+  const furniture = {
+    name: req.body.name,
+    description: req.body.description,
+    material: req.body.material,
+    dimensions: req.body.dimensions,
+    quantity: 0,
+    price: req.body.price,
+    color: req.body.color,
+  };
+  const newFurniture = new Furniture(furniture);
   if (!req.body.quantity) {
     newFurniture
       .save()
@@ -104,7 +129,7 @@ furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
  */
 furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
   // Avisar al usuario que la cantidad no se puede modificar, es decir que el mueble se añade pero la cantidad está a cero.
-  furniture
+  Furniture
     .updateMany(req.query, req.body)
     .then((furniture) => {
       if (furniture) {
@@ -126,7 +151,7 @@ furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
  */
 furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
-  furniture
+  Furniture
     .findByIdAndUpdate(id, req.body, { new: true })
     .then((furniture) => {
       if (furniture) {
@@ -148,7 +173,7 @@ furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
  */
 furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
-  furniture
+  Furniture
     .findByIdAndDelete(id)
     .then((furniture) => {
       if (furniture) {

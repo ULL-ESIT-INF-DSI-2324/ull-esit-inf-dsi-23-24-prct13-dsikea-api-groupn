@@ -13,9 +13,9 @@ describe('POST /users', () => {
 
 let fornuture, customer, providers, transactions;
 
-beforeEach(async () => {
-  fornuture = await createFornuture();
-  customer = await createCustomer();
-  providers = await createProviders();
-  transactions = await createTransactions();
-});
+// beforeEach(async () => {
+//   fornuture = await createFornuture();
+//   customer = await createCustomer();
+//   providers = await createProviders();
+//   transactions = await createTransactions();
+// });
