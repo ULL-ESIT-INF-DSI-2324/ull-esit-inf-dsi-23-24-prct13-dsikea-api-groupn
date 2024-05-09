@@ -6,9 +6,9 @@ export const furnitureRouter = express.Router();
 furnitureRouter.use(express.json());
 
 /**
- * Verifica si las claves en la consulta de la solicitud coinciden con las claves en el esquema de los muebles.
- * @param req - La solicitud HTTP.
- * @returns Verdadero si todas las claves en la consulta están en el esquema de los muebles, falso en caso contrario.
+ * Checks if the keys in the request query match the keys in the furniture schema.
+ * @param {Request} req - The HTTP request.
+ * @returns True if all keys in the query are in the furniture schema, false otherwise.
  */
 function checkFurnitureQuery(req: Request) {
   const keys = Object.keys(req.query);
@@ -22,9 +22,8 @@ function checkFurnitureQuery(req: Request) {
 }
 
 /**
- * Maneja las solicitudes GET a la ruta "/furnitures".
- * Si se proporciona una consulta, verifica la consulta y luego busca muebles que coincidan con la consulta.
- * Si no se proporciona una consulta, devuelve un error.
+ * GET all furnitures.
+ * @returns {Response} - List of all furnitures.
  */
 furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
   if (req.query) {
@@ -35,24 +34,25 @@ furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
           res.json(furnitures);
         })
         .catch(() => {
-          res.status(500).json({ message: "Muebles no encontrados" });
+          res.status(500).json({ message: "Furnitures not found" });
         });
     } else {
       res.status(400).json({
         message:
-          "Parámetros de búsqueda no válidos, recuerde que los posibles campos son: name, description, material y price",
+          "Invalid search parameters, remember that the possible fields are: name, description, material and price",
       });
     }
   } else {
     res
       .status(400)
-      .json({ message: "No se ha especificado ningún parámetro de búsqueda" });
+      .json({ message: "No search parameters specified" });
   }
 });
 
 /**
- * Maneja las solicitudes GET a la ruta "/furnitures/:id".
- * Busca un mueble por su ID. Si no se encuentra el mueble, devuelve un error.
+ * GET a furniture by ID.
+ * @param {string} id - The ID of the furniture.
+ * @returns {Response} - The furniture with the specified ID.
  */
 furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
@@ -62,42 +62,67 @@ furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
       if (furniture) {
         res.json(furniture);
       } else {
-        res.status(404).json({ message: "Mueble no encontrado" });
+        res.status(404).json({ message: "Furniture not found" });
       }
     })
     .catch(() => {
-      res.status(500).json({ message: "Error al buscar el mueble" });
+      res.status(500).json({ message: "Error when searching furniture" });
     });
 });
 
 /**
- * Maneja las solicitudes POST a la ruta "/furnitures".
- * Crea un nuevo mueble con los datos proporcionados en el cuerpo de la solicitud.
- * Si se proporciona una cantidad, devuelve un error porque la cantidad debe establecerse mediante una transacción.
+ * POST a new furniture.
+ * @param {Request} req - The request object containing customer data.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The newly created customer.
  */
 furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
+  // Hacer interfaz y añadir cantidad igual 0.
   const newFurniture = new furniture(req.body);
-  if (!req.body.cantity) {
+  if (!req.body.quantity) {
     newFurniture
       .save()
       .then(() => {
-        res.json({ message: "Mueble añadido correctamente" });
+        res.json({ message: "Furniture added successfully" });
       })
       .catch(() => {
-        res.status(500).json({ message: "Error al añadir el mueble" });
+        res.status(500).json({ message: "Error when adding furniture" });
       });
   } else {
     res.status(400).json({
       message:
-        "No se puede añadir un mueble con cantidad, para ello se debe hacer una transacción",
+        "You cannot add a piece of furniture with quantity, to do so you must make a transaction",
     });
   }
 });
 
 /**
- * Maneja las solicitudes PATCH a la ruta "/furnitures/:id".
- * Actualiza un mueble por su ID con los datos proporcionados en el cuerpo de la solicitud.
- * Si no se encuentra el mueble, devuelve un error.
+ * Update furniture information.
+ * @param {Request} req - The request object containing updated furniture information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated furniture.
+ */
+furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
+  // Avisar al usuario que la cantidad no se puede modificar, es decir que el mueble se añade pero la cantidad está a cero.
+  furniture
+    .updateMany(req.query, req.body)
+    .then((furniture) => {
+      if (furniture) {
+        res.json(furniture);
+      } else {
+        res.status(404).json({ message: "Furniture not found" });
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ message: "Error when updating furniture" });
+    });
+});
+
+/**
+ * Update furniture information by ID.
+ * @param {Request} req - The request object containing updated furniture information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated furniture.
  */
 furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
@@ -107,59 +132,19 @@ furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
       if (furniture) {
         res.json(furniture);
       } else {
-        res.status(404).json({ message: "Mueble no encontrado" });
+        res.status(404).json({ message: "Furniture not found" });
       }
     })
     .catch(() => {
-      res.status(500).json({ message: "Error al actualizar el mueble" });
+      res.status(500).json({ message: "Error when updating furniture" });
     });
 });
 
 /**
- * Maneja las solicitudes PATCH a la ruta "/furnitures".
- * Actualiza todos los muebles que coinciden con la consulta proporcionada con los datos proporcionados en el cuerpo de la solicitud.
- * Si no se encuentra ningún mueble, devuelve un error.
- *
- * @note Manu explicame esto
- */
-furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
-  furniture
-    .updateMany(req.query, req.body)
-    .then((furniture) => {
-      if (furniture) {
-        res.json(furniture);
-      } else {
-        res.status(404).json({ message: "Mueble no encontrado" });
-      }
-    })
-    .catch(() => {
-      res.status(500).json({ message: "Error al actualizar el mueble" });
-    });
-});
-
-/**
- * Maneja las solicitudes DELETE a la ruta "/furnitures".
- * Elimina todos los muebles que coinciden con la consulta proporcionada.
- * Si no se encuentra ningún mueble, devuelve un error.
- */
-furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
-  furniture
-    .deleteMany(req.query)
-    .then((furniture) => {
-      if (furniture) {
-        res.json(furniture);
-      } else {
-        res.status(404).json({ message: "Mueble no encontrado" });
-      }
-    })
-    .catch(() => {
-      res.status(500).json({ message: "Error al eliminar el mueble" });
-    });
-});
-
-/**
- * Maneja las solicitudes DELETE a la ruta "/furnitures/:id".
- * Elimina un mueble por su ID. Si no se encuentra el mueble, devuelve un error.
+ * Delete a furniture by ID.
+ * @param {Request} req - The request object containing the ID of the furniture to be deleted.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message if the furniture is deleted, otherwise error message.
  */
 furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
   const id = req.params.id;
@@ -169,14 +154,10 @@ furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
       if (furniture) {
         res.json(furniture);
       } else {
-        res.status(404).json({ message: "Mueble no encontrado" });
+        res.status(404).json({ message: "Furniture not found" });
       }
     })
     .catch(() => {
-      res.status(500).json({ message: "Error al eliminar el mueble" });
+      res.status(500).json({ message: "Error when deleting furniture" });
     });
 });
-
-// furnitureRouter.listen(3000, () => {
-//   console.log("Server is up on port 3000");
-// });

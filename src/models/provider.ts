@@ -1,5 +1,5 @@
 import { Document, model, Schema } from "mongoose";
-import validator from 'validator';
+import validator from "validator";
 
 interface IProvider extends Document {
   name: string;
@@ -15,30 +15,34 @@ export const providerSchema: Schema = new Schema<IProvider>({
     required: true,
     validate: {
       validator: (value: string) => {
-        return validator.isMobilePhone(value, 'any');
+        return validator.isMobilePhone(value, "any");
       },
-      message: "Invalid phone number"
-    }
+      message: "Invalid phone number",
+    },
   },
   postalCode: {
     type: String,
     required: true,
     validate: {
       validator: (value: string) => {
-        return validator.isPostalCode(value, 'any');
+        return validator.isPostalCode(value, "any");
       },
-      message: "Invalid address"
-    }
+      message: "Invalid address",
+    },
   },
   cif: {
     type: String,
     required: true,
     validate: {
       validator: (value: string) => {
-        return validator.isAlphanumeric(value) && value.length === 9 && value[0] === value[0].toUpperCase();
+        return (
+          validator.isAlphanumeric(value) &&
+          value.length === 9 &&
+          value[0] === value[0].toUpperCase()
+        );
       },
-      message: "Invalid CIF"
-    }
+      message: "Invalid CIF",
+    },
   },
 });
 

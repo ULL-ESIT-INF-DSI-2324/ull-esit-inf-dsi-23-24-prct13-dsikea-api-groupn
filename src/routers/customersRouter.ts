@@ -5,8 +5,11 @@ import Customer from "../models/customer.js";
 export const customersRouter = express.Router();
 customersRouter.use(express.json());
 
-// GET all providers
-customersRouter.get("/customers", async (req: Request, res: Response) => {
+/**
+ * GET all customers.
+ * @returns {Response} - List of all customers.
+ */
+customersRouter.get("/customers", async (__, res: Response) => {
   try {
     const customers = await Customer.find();
     if (customers) {
@@ -19,6 +22,11 @@ customersRouter.get("/customers", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET a customer by DNI.
+ * @param {string} dni - The DNI of the customer.
+ * @returns {Response} - The customer with the specified DNI.
+ */
 customersRouter.get("/customers/:dni", async (req: Request, res: Response) => {
   try {
     const customer = await Customer.findOne({ dni: req.params.dni });
@@ -32,7 +40,11 @@ customersRouter.get("/customers/:dni", async (req: Request, res: Response) => {
   }
 });
 
-// GET a specific provider by ID
+/**
+ * GET a customer by ID.
+ * @param {string} id - The ID of the customer.
+ * @returns {Response} - The customer with the specified ID.
+ */
 customersRouter.get("/customers/:id", async (req, res) => {
   try {
     const customer = await Customer.findOne({ id: req.params.id });
@@ -46,7 +58,12 @@ customersRouter.get("/customers/:id", async (req, res) => {
   }
 });
 
-// POST a new provider
+/**
+ * POST a new customer.
+ * @param {Request} req - The request object containing customer data.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The newly created customer.
+ */
 customersRouter.post("/customers", async (req, res) => {
   try {
     const customers = new Customer({
@@ -63,6 +80,12 @@ customersRouter.post("/customers", async (req, res) => {
   }
 });
 
+/**
+ * Update customer contact information.
+ * @param {Request} req - The request object containing updated contact information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated customer.
+ */
 customersRouter.patch("/customers:contact", async (req, res) => {
   try {
     const allowedUpdates = ["name", "contact", "postalCode", "dni"];
@@ -90,6 +113,12 @@ customersRouter.patch("/customers:contact", async (req, res) => {
   }
 });
 
+/**
+ * Update customer information by ID.
+ * @param {Request} req - The request object containing updated customer information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated customer.
+ */
 customersRouter.patch("/customers/:id", async (req, res) => {
   try {
     const allowedUpdates = ["name", "contact", "postalCode", "dni"];
@@ -117,7 +146,12 @@ customersRouter.patch("/customers/:id", async (req, res) => {
   }
 });
 
-// DELETE a provider by CIF
+/**
+ * Delete a customer by DNI.
+ * @param {Request} req - The request object containing the DNI of the customer to be deleted.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message if the customer is deleted, otherwise error message.
+ */
 customersRouter.delete("/customers/:dni", async (req, res) => {
   try {
     const provider = await Customer.findOneAndDelete({ dni: req.params.dni });
@@ -131,7 +165,12 @@ customersRouter.delete("/customers/:dni", async (req, res) => {
   }
 });
 
-// DELETE a provider by ID
+/**
+ * Delete a customer by ID.
+ * @param {Request} req - The request object containing the ID of the customer to be deleted.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message if the customer is deleted, otherwise error message.
+ */
 customersRouter.delete(
   "/customers/:id",
   async (req: Request, res: Response) => {
