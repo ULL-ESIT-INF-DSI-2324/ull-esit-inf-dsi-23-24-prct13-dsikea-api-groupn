@@ -7,6 +7,8 @@
   "scripts": {
     "start": "tsc-watch --onSuccess \"node dist/src/index.js\"",
     "test": "mocha --exit",
+    "dev": "tsc-watch --onSuccess \"env-cmd -f ./config/dev.env node dist/indexApp.js\"",
+    "tests": "env-cmd -f ./config/test.env mocha --exit",
     "coverage": "c8 npm test && c8 report --reporter=lcov",
     "doc": "typedoc --out docs src/**/*.ts; touch docs/.nojekyll"
   },
@@ -29,6 +31,7 @@
     "@typescript-eslint/parser": "^7.0.2",
     "chai": "^4.3.7",
     "coveralls": "^3.1.1",
+    "env-cmd": "^10.1.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "mocha": "^10.3.0",
