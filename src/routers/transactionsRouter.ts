@@ -210,7 +210,7 @@ transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
 transactionsRouter.post("/transactions", async (req, res) => {
   if (req.body.dni && req.body.type === "Sale") {
     try {
-      const customer = await Customer.findOne({ dni: req.query.dni });
+      const customer = await Customer.findOne({ dni: req.body.dni });
       if (customer) {
         const furniture = req.body.furniture.map(
           (item: bodyTransFurniture) => ({
