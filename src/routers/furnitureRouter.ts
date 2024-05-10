@@ -25,15 +25,20 @@ function checkFurnitureQuery(req: Request) {
  * GET all furnitures. Or search furnitures by name, description, material, price...
  * @returns {Response} - List of all furnitures.
  */
+
 furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
   if (req.query) {
     if (checkFurnitureQuery(req)) {
       Furniture.find(req.query)
         .then((furnitures) => {
-          res.json(furnitures);
+          if (furnitures.length === 0) {
+            res.status(404).json({ error: "Furnitures not found" });
+          } else {
+            res.json(furnitures);
+          }
         })
         .catch(() => {
-          res.status(404).json({ error: "Furnitures not found" });
+          res.status(500).json({ error: "Internal server error" });
         });
     } else {
       res.status(400).json({
@@ -45,7 +50,6 @@ furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
     res.status(400).json({ error: "No search parameters specified" });
   }
 });
-
 /**
  * GET a furniture by ID.
  * @param {string} id - The ID of the furniture.
@@ -79,23 +83,22 @@ furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
       description: req.body.description,
       material: req.body.material,
       dimensions: req.body.dimensions,
-      quantity: 0,
+      quantity: req.body.quantity,
       price: req.body.price,
       color: req.body.color,
     };
     const newFurniture = new Furniture(furniture);
-    if (!req.body.quantity) {
-      newFurniture
-        .save()
+    if (newFurniture.quantity === 0){
+      newFurniture.save()
         .then(() => {
           res.json({ message: "Furniture added successfully" });
         })
         .catch(() => {
-          res.status(500).json({ message: "Error when adding furniture" });
+          res.status(500).json({ error: "Error when adding furniture" });
         });
     } else {
       res.status(400).json({
-        message:
+        error:
           "You cannot add a piece of furniture with quantity, to do so you must make a transaction",
       });
     }
@@ -116,7 +119,7 @@ furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
   if (req.body) {
     if (req.body.quantity) {
       return res.status(400).json({
-        message:
+        error:
           "You cannot add a piece of furniture with quantity, to do so you must make a transaction",
       });
     }
@@ -124,16 +127,16 @@ furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
       Furniture.find(req.query)
         .then((foundFurniture) => {
           if (foundFurniture.length === 0) {
-            return res.status(404).json({ message: "Furniture not found" });
+            return res.status(404).json({ error: "Furniture not found" });
           } else if (foundFurniture.length === 1) {
             Furniture.updateOne(req.query, req.body)
               .then(() => {
-                res.json({ message: "Furniture updated successfully" });
+                res.json({ message: "Furniture updated successfully" , furniture:  req.body});
               })
               .catch(() => {
                 res
                   .status(500)
-                  .json({ message: "Error when updating furniture" });
+                  .json({ error: "Error when updating furniture" });
               });
           } else {
             res.status(500).json({
@@ -146,7 +149,7 @@ furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
         });
     } else {
       res.status(400).json({
-        message:
+        error:
           "Invalid search parameters, remember that the possible fields are: name, description, material and price",
       });
     }
@@ -167,7 +170,7 @@ furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
   if (req.body) {
     if (req.body.quantity) {
       res.status(400).json({
-        message:
+        error:
           "You cannot add a piece of furniture with quantity, to do so you must make a transaction",
       });
     }
@@ -177,11 +180,11 @@ furnitureRouter.patch("/furnitures/:id", (req: Request, res: Response) => {
         if (furniture) {
           res.json(furniture);
         } else {
-          res.status(404).json({ message: "Furniture not found" });
+          res.status(404).json({ error: "Furniture not found" });
         }
       })
       .catch(() => {
-        res.status(500).json({ message: "Error when updating furniture" });
+        res.status(500).json({ error: "Error when updating furniture" });
       });
   } else {
     res.status(400).json({
@@ -201,13 +204,13 @@ furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
   Furniture.findByIdAndDelete(id)
     .then((furniture) => {
       if (furniture) {
-        res.json(furniture);
+        res.json({message: "Furniture deleted successfully" });
       } else {
-        res.status(404).json({ message: "Furniture not found" });
+        res.status(404).json({ error: "Furniture not found" });
       }
     })
     .catch(() => {
-      res.status(500).json({ message: "Error when deleting furniture" });
+      res.status(500).json({ error: "Error when deleting furniture" });
     });
 });
 
@@ -216,7 +219,7 @@ furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
     Furniture.find(req.query)
       .then((foundFurniture) => {
         if (foundFurniture.length === 0) {
-          return res.status(404).json({ message: "Furniture not found" });
+          return res.status(404).json({ error: "Furniture not found" });
         } else if (foundFurniture.length === 1) {
           Furniture.deleteOne(req.query)
             .then(() => {
@@ -225,11 +228,11 @@ furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
             .catch(() => {
               res
                 .status(500)
-                .json({ message: "Error when deleting furniture" });
+                .json({ error: "Error when deleting furniture" });
             });
         } else {
           res.status(500).json({
-            message: "Multiple matching furniture items have been found.",
+            error: "Multiple matching furniture items have been found.",
           });
         }
       })
@@ -238,7 +241,7 @@ furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
       });
   } else {
     res.status(400).json({
-      message:
+      error:
         "Invalid search parameters, remember that the possible fields are: name, description, material and price",
     });
   }
