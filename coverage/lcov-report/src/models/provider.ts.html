@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>42/49</span>
+                <span class='fraction'>49/49</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>42/49</span>
+                <span class='fraction'>49/49</span>
             </div>
         
             
@@ -129,7 +129,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">128x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -139,7 +139,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">130x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -149,11 +149,11 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-yes">126x</span>
+<span class="cline-any cline-yes">126x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -164,7 +164,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Document, model, Schema } from "mongoose";
 import validator from "validator";
 &nbsp;
-interface IProvider extends Document {
+export interface IProvider extends Document {
   name: string;
   contact: string;
   postalCode: string;
@@ -177,8 +177,8 @@ export const providerSchema: Schema = new Schema&lt;IProvider&gt;({
     type: String,
     required: true,
     validate: {
-      validator: <span class="fstat-no" title="function not covered" >(value: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        return validator.isMobilePhone(value, "any");</span>
+      validator: (value: string) =&gt; {
+        return validator.isMobilePhone(value, "any");
       },
       message: "Invalid phone number",
     },
@@ -187,8 +187,8 @@ export const providerSchema: Schema = new Schema&lt;IProvider&gt;({
     type: String,
     required: true,
     validate: {
-      validator: <span class="fstat-no" title="function not covered" >(value: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        return validator.isPostalCode(value, "any");</span>
+      validator: (value: string) =&gt; {
+        return validator.isPostalCode(value, "any");
       },
       message: "Invalid address",
     },
@@ -197,12 +197,12 @@ export const providerSchema: Schema = new Schema&lt;IProvider&gt;({
     type: String,
     required: true,
     validate: {
-      validator: <span class="fstat-no" title="function not covered" >(value: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        return (</span>
-<span class="cstat-no" title="statement not covered" >          validator.isAlphanumeric(value) &amp;&amp;</span>
-<span class="cstat-no" title="statement not covered" >          value.length === 9 &amp;&amp;</span>
-<span class="cstat-no" title="statement not covered" >          value[0] === value[0].toUpperCase()</span>
-<span class="cstat-no" title="statement not covered" >        );</span>
+      validator: (value: string) =&gt; {
+        return (
+          validator.isAlphanumeric(value) &amp;&amp;
+          value.length === 9 &amp;&amp;
+          value[0] === value[0].toUpperCase()
+        );
       },
       message: "Invalid CIF",
     },
@@ -217,7 +217,7 @@ export default model&lt;IProvider&gt;("Provider", providerSchema);
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-05-10T11:50:38.860Z
+                at 2024-05-10T12:06:56.221Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

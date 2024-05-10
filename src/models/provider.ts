@@ -1,7 +1,7 @@
 import { Document, model, Schema } from "mongoose";
 import validator from "validator";
 
-interface IProvider extends Document {
+export interface IProvider extends Document {
   name: string;
   contact: string;
   postalCode: string;

@@ -8,7 +8,7 @@ providerRouter.use(express.json());
 providerRouter.get("/providers", async (req: Request, res: Response) => {
   if (req.query.cif) {
     try {
-      const provider = await Provider.findOne({ cif: req.params.cif });
+      const provider = await Provider.findOne({ cif: req.query.cif });
       if (provider) {
         return res.send(provider);
       } else {
@@ -34,7 +34,8 @@ providerRouter.get("/providers", async (req: Request, res: Response) => {
 // GET a specific provider by ID
 providerRouter.get("/providers/:id", async (req, res) => {
   try {
-    const provider = await Provider.findOne({ id: req.params.id });
+    const provider = await Provider.findOne({ _id: req.params.id });
+    
     if (provider) {
       return res.send(provider);
     } else {
@@ -54,6 +55,10 @@ providerRouter.post("/providers", async (req, res) => {
       postalCode: req.body.postalCode,
       cif: req.body.cif,
     });
+    const samedni = await Provider.findOne({ cif: req.body.cif });
+    if (samedni) {
+      return res.status(400).send({ error: "CIF already exists" });
+    }
     const newProvider = await provider.save();
     return res.status(201).send(newProvider);
   } catch (error) {
@@ -106,7 +111,7 @@ providerRouter.patch("/providers/:id", async (req, res) => {
       });
     }
     const provider = await Provider.findOneAndUpdate(
-      { id: req.params.id },
+      { _id: req.params.id },
       req.body,
       { new: true, runValidators: true },
     );
