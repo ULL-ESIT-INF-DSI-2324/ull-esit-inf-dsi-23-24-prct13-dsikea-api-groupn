@@ -13,7 +13,7 @@ customersRouter.use(express.json());
 customersRouter.get("/customers", async (req: Request, res: Response) => {
   if (req.query.dni) {
     try {
-      const customer = await Customer.findOne({ dni: req.params.dni });
+      const customer = await Customer.findOne({ dni: req.query.dni });
       if (customer) {
         return res.send(customer);
       } else {
@@ -43,11 +43,13 @@ customersRouter.get("/customers", async (req: Request, res: Response) => {
  */
 customersRouter.get("/customers/:id", async (req, res) => {
   try {
-    const customer = await Customer.findOne({ id: req.params.id });
-    if (customer) {
-      return res.send(customer);
-    } else {
+    const customer = await Customer.findOne({ _id: req.params.id });
+  
+    if (!customer) {
       return res.status(404).send({ error: "Customer not found" });
+     
+    } else {
+      return res.send(customer);
     }
   } catch (error) {
     return res.status(500).send(error);
@@ -69,6 +71,10 @@ customersRouter.post("/customers", async (req, res) => {
       postalCode: req.body.postalCode,
       dni: req.body.dni,
     });
+    const samedni = await Customer.findOne({ dni: req.body.dni });
+    if (samedni) {
+      return res.status(400).send({ error: "DNI already exists" });
+    }
     const newCustomer = await customers.save();
     return res.status(201).send(newCustomer);
   } catch (error) {
@@ -84,7 +90,7 @@ customersRouter.post("/customers", async (req, res) => {
  */
 customersRouter.patch("/customers/:id", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "postalCode", "dni"];
+    const allowedUpdates = ["name", "contact", "postalCode", "dni", "email"]
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),
@@ -96,7 +102,7 @@ customersRouter.patch("/customers/:id", async (req, res) => {
       });
     }
     const provider = await Customer.findOneAndUpdate(
-      { id: req.params.id },
+      { _id: req.params.id },
       req.body,
       { new: true, runValidators: true },
     );

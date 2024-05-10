@@ -33,16 +33,16 @@ furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
           res.json(furnitures);
         })
         .catch(() => {
-          res.status(500).json({ message: "Furnitures not found" });
+          res.status(404).json({ error: "Furnitures not found" });
         });
     } else {
       res.status(400).json({
-        message:
+        error:
           "Invalid search parameters, remember that the possible fields are: name, description, material and price",
       });
     }
   } else {
-    res.status(400).json({ message: "No search parameters specified" });
+    res.status(400).json({ error: "No search parameters specified" });
   }
 });
 
@@ -58,11 +58,11 @@ furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
       if (furniture) {
         res.json(furniture);
       } else {
-        res.status(404).json({ message: "Furniture not found" });
+        res.status(404).json({ error: "Furniture not found" });
       }
     })
     .catch(() => {
-      res.status(500).json({ message: "Error when searching furniture" });
+      res.status(500).json({ error: "Error when searching furniture" });
     });
 });
 
