@@ -2,121 +2,29 @@ import express, { Request, Response } from "express";
 import Transaction from "../models/transaction.js";
 import Customer from "../models/customer.js";
 import Provider from "../models/provider.js";
-import Furniture from "../models/furniture.js";
-import { FurnitureTuple } from "../models/transaction.js";
-import { Schema } from "mongoose";
+import {
+  bodyTransFurniture,
+  resetPurchase,
+  resetSale,
+  getSale,
+  getPurchase,
+} from "../transactionFunctions.js";
 
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
 
-function resetPurchase (transaction: FurnitureTuple[]) {
-  transaction.forEach(async (item: FurnitureTuple) => {
-    const foundFurniture = await Furniture.findOne({ _id: item.furniture });
-    if (!foundFurniture) {
-      return { error: "Furniture not found" };
-    }
-    const resetQuantity = foundFurniture.quantity - item.quantity;
-    Furniture.updateOne({ _id: item.furniture }, { quantity: resetQuantity });
-  });
-}
-function resetSale (transaction: FurnitureTuple[]) {
-  transaction.forEach(async (item: FurnitureTuple) => {
-    const foundFurniture = await Furniture.findOne({ _id: item.furniture });
-    if (!foundFurniture) {
-      return { error: "Furniture not found" };
-    }
-    const resetQuantity = foundFurniture.quantity + item.quantity;
-    Furniture.updateOne({ _id: item.furniture }, { quantity: resetQuantity });
-  });
-}
-
-function getSale(furniture: bodyTransFurniture[]) {
-  let tPrice: number = 0;
-  const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-  furniture.forEach(async (item: bodyTransFurniture) => {
-    const foundFurnitureName = await Furniture.find({ name: item.name });
-    if (!foundFurnitureName) {
-      return { error: "Furniture name not found" };
-    }
-    const foundFurnitureMaterial = await Furniture.find({
-      name: item.name,
-      material: item.material,
-    });
-    if (!foundFurnitureMaterial) {
-      return {
-        error: "Furniture material not found",
-        furnitures: foundFurnitureName,
-      };
-    }
-    const foundFurnitureColor = await Furniture.findOne({
-      name: item.name,
-      material: item.material,
-      color: item.color,
-    });
-    if (!foundFurnitureColor) {
-      return {
-        error: "Furniture color not found",
-        furnitures: foundFurnitureMaterial,
-      };
-    }
-    Furniture.findOneAndUpdate(
-      { _id: foundFurnitureColor._id },
-      { quantity: foundFurnitureColor.quantity + item.quantity },
-    );
-    tPrice += foundFurnitureColor.price * item.quantity;
-    foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-  });
-  return {furniture: foundFurniture, tPrice: tPrice};
-}
-
-function getPurchase (furniture: bodyTransFurniture[]){
-  let tPrice: number = 0;
-  const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-  furniture.forEach(async (item: bodyTransFurniture) => {
-    const foundFurnitureName = await Furniture.find({ name: item.name });
-    if (!foundFurnitureName) {
-      return { error: "Furniture name not found" };
-    }
-    const foundFurnitureMaterial = await Furniture.find({
-      name: item.name,
-      material: item.material,
-    });
-    if (!foundFurnitureMaterial) {
-      return {
-        error: "Furniture material not found",
-        furnitures: foundFurnitureName,
-      };
-    }
-    const foundFurnitureColor = await Furniture.findOne({
-      name: item.name,
-      material: item.material,
-      color: item.color,
-    });
-    if (!foundFurnitureColor) {
-      return {
-        error: "Furniture color not found",
-        furnitures: foundFurnitureMaterial,
-      };
-    }
-    Furniture.findOneAndUpdate(
-      { _id: foundFurnitureColor._id },
-      { quantity: foundFurnitureColor.quantity + item.quantity },
-    );
-    tPrice += foundFurnitureColor.price * item.quantity;
-    foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-  });
-  return {furniture: foundFurniture, tPrice: tPrice};
-}
-
-interface bodyTransFurniture {
-  quantity: number;
-  name: string;
-  material: string;
-  color: string;
-}
-
+/**
+ * Handles GET requests for retrieving transactions based on various query parameters.
+ * If no query parameters are provided, returns all transactions.
+ * If 'dni' query parameter is provided, retrieves transactions associated with a customer's ID number.
+ * If 'cif' query parameter is provided, retrieves transactions associated with a provider's CIF number.
+ * If 'Idate' and 'Fdate' query parameters are provided, retrieves transactions within a date range.
+ * @param {Request} req - The request object containing query parameters.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The requested transactions or appropriate error message.
+ */
 transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
-  if (!req.query) {
+  if (Object.keys(req.query).length === 0) {
     try {
       const transactions = await Transaction.find();
       if (transactions) {
@@ -181,137 +89,123 @@ transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
   }
 });
 
-transactionsRouter.get("/transactions/:id", async (req, res) => {
-  try {
-    const customer = await Transaction.findOne({ id: req.params.id });
-    if (customer) {
-      return res.send(customer);
-    } else {
-      return res.status(404).send({ error: "Customer not found" });
-    }
-  } catch (error) {
-    return res.status(500).send(error);
-  }
-});
-
-transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
-  try {
-    const customer = await Transaction.find({ type: req.params.type });
-    if (customer) {
-      return res.send(customer);
-    } else {
-      return res.status(404).send({ error: "Customer not found" });
-    }
-  } catch (error) {
-    return res.status(500).send(error);
-  }
-});
-
-transactionsRouter.post("/transactions", async (req, res) => {
-  if (req.body.dni && req.body.type === "Sale") {
+/**
+ * Handles GET requests for retrieving a single transaction by its ID.
+ * @param {Request} req - The request object containing the transaction ID.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The requested transaction or appropriate error message.
+ */
+transactionsRouter.get(
+  "/transactions/:id",
+  async (req: Request, res: Response) => {
     try {
-      const customer = await Customer.findOne({ dni: req.body.dni });
+      const customer = await Transaction.findOne({ id: req.params.id });
       if (customer) {
-        const furniture = req.body.furniture.map(
-          (item: bodyTransFurniture) => ({
-            quantity: item.quantity,
-            name: item.name,
-            material: item.material,
-            color: item.color,
-          }),
-        );
-        if(!getSale(furniture).furniture){
-          return res.status(400).send(getSale(furniture));
-        } else {
-        const transaction = new Transaction({
-          type: req.body.type,
-          furniture: getSale(furniture).furniture,
-          customer: customer._id,
-          time: req.body.time,
-          date: req.body.date,
-          totalPrice: getSale(furniture).tPrice,
-        });
-        const newTransaction = await transaction.save();
-        return res.status(201).send(newTransaction);
-      }
-    } else {
-      return res.status(404).send({ error: "Customer not found" });
-    }
-    } catch (error) {
-      return res.status(500).send(error);
-    }
-  } else if (req.query.cif && req.query.type === "Purchase") {
-    try {
-      const provider = await Provider.findOne({ cif: req.query.cif });
-      if (provider) {
-        const furniture = req.body.furniture.map(
-          (item: bodyTransFurniture) => ({
-            quantity: item.quantity,
-            name: item.name,
-            material: item.material,
-            color: item.color,
-          }),
-        );
-        let tPrice: number = 0;
-        const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-        furniture.forEach(async (item: bodyTransFurniture) => {
-          const foundFurnitureName = await Furniture.find({ name: item.name });
-          if (!foundFurnitureName) {
-            return res.status(404).send({ error: "Furniture name not found" });
-          }
-          const foundFurnitureMaterial = await Furniture.find({
-            name: item.name,
-            material: item.material,
-          });
-          if (!foundFurnitureMaterial) {
-            return res.status(404).send({
-              error: "Furniture material not found",
-              furnitures: foundFurnitureName,
-            });
-          }
-          const foundFurnitureColor = await Furniture.findOne({
-            name: item.name,
-            material: item.material,
-            color: item.color,
-          });
-          if (!foundFurnitureColor) {
-            return res.status(404).send({
-              error: "Furniture color not found",
-              furnitures: foundFurnitureMaterial,
-            });
-          }
-          Furniture.findOneAndUpdate(
-            { _id: foundFurnitureColor._id },
-            { quantity: foundFurnitureColor.quantity + item.quantity },
-          );
-          tPrice += foundFurnitureColor.price * item.quantity;
-          foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-        });
-        const transaction = new Transaction({
-          type: req.body.type,
-          furniture: foundFurniture,
-          provider: provider._id,
-          time: req.body.time,
-          date: req.body.date,
-          totalPrice: tPrice,
-        });
-        const newTransaction = await transaction.save();
-        return res.status(201).send(newTransaction);
+        return res.send(customer);
       } else {
-        return res.status(404).send({ error: "Provider not found" });
+        return res.status(404).send({ error: "Customer not found" });
       }
     } catch (error) {
       return res.status(500).send(error);
     }
-  }
-});
+  },
+);
 
-// Actualizar transacciones
-transactionsRouter.patch("/transactions:id", async (req, res) => {
-    const transaction = await Transaction.findOneAndUpdate({ _id: req.params.id });
+/**
+ * Handles POST requests for creating new transactions, either sales or purchases.
+ * @param {Request} req - The request object containing transaction details.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The newly created transaction or appropriate error message.
+ */
+transactionsRouter.post(
+  "/transactions",
+  async (req: Request, res: Response) => {
+    if (req.body.dni && req.body.type === "Sale") {
+      try {
+        const customer = await Customer.findOne({ dni: req.body.dni });
+        if (customer) {
+          const furniture = req.body.furniture.map(
+            (item: bodyTransFurniture) => ({
+              quantity: item.quantity,
+              name: item.name,
+              material: item.material,
+              color: item.color,
+            }),
+          );
+          const saleResult = getSale(furniture);
+          if (!saleResult.furniture) {
+            return res.status(400).send(saleResult);
+          } else {
+            const transaction = new Transaction({
+              type: req.body.type,
+              furniture: saleResult.furniture,
+              customer: customer._id,
+              time: req.body.time,
+              date: req.body.date,
+              totalPrice: saleResult.tPrice,
+            });
+            const newTransaction = await transaction.save();
+            return res.status(201).send(newTransaction);
+          }
+        } else {
+          return res.status(404).send({ error: "Customer not found" });
+        }
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+    } else if (req.query.cif && req.query.type === "Purchase") {
+      try {
+        const provider = await Provider.findOne({ cif: req.query.cif });
+        if (provider) {
+          const furniture = req.body.furniture.map(
+            (item: bodyTransFurniture) => ({
+              quantity: item.quantity,
+              name: item.name,
+              material: item.material,
+              color: item.color,
+            }),
+          );
+          const purchaseResult = getPurchase(furniture);
+          if (!purchaseResult.furniture) {
+            return res.status(400).send(purchaseResult);
+          } else {
+            const transaction = new Transaction({
+              type: req.body.type,
+              furniture: purchaseResult.furniture,
+              provider: provider._id,
+              time: req.body.time,
+              date: req.body.date,
+              totalPrice: purchaseResult.tPrice,
+            });
+            const newTransaction = await transaction.save();
+            return res.status(201).send(newTransaction);
+          }
+        } else {
+          return res.status(404).send({ error: "Provider not found" });
+        }
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+    }
+  },
+);
+
+/**
+ * Handles PATCH requests for updating transactions.
+ * @param {Request} req - The request object containing updated transaction information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated transaction or appropriate error message.
+ */
+transactionsRouter.patch(
+  "/transactions:id",
+  async (req: Request, res: Response) => {
+    const transaction = await Transaction.findOneAndUpdate({
+      _id: req.params.id,
+    });
     if (transaction) {
       if (transaction.type === "Sale") {
-        // Como no se si se van a cambiar los muebles pondré todo el stock a como estaba antes sumando, esto lo haré solo si el usuario desea cambiar los muebles.
+        // The stock of the furniture is reset before the transaction,
+        // only if the user changes the furniture
         if (req.body.furniture) {
           resetSale(transaction.furniture);
           const furnitureMap = req.body.furniture.map(
@@ -322,48 +216,56 @@ transactionsRouter.patch("/transactions:id", async (req, res) => {
               color: item.color,
             }),
           );
-        if (!getSale(furnitureMap).furniture) {
-          return res.status(400).send(getSale(req.body.furniture));
-        } else {
-          const foundFurniture = getSale(req.body.furniture).furniture;
-          const tPrice = getSale(req.body.furniture).tPrice;
-          Transaction.findOneAndUpdate(
-            { _id: req.params.id },
-            {
-              furniture: foundFurniture,
-              totalPrice: tPrice,
-            },
-            { new: true, runValidators: true },
-          );
-        }
-      }
-      } else if (transaction.type === "Purchase") {
-        // Como no se si se van a cambiar los muebles pondré el stock como estaba antes restando, solo si el usuario quiere cambiar los muebles.
-        if (req.body.furniture) {    
-          resetPurchase(transaction.furniture);
-          if (!getPurchase(req.body.furniture).furniture) {
-            return res.status(400).send(getPurchase(req.body.furniture));
+          const saleResult = getSale(furnitureMap);
+          if (!saleResult.furniture) {
+            return res.status(400).send(saleResult);
           } else {
-          const foundFurniture = getPurchase(req.body.furniture).furniture;
-          const tPrice = getPurchase(req.body.furniture).tPrice;
-          Transaction.findOneAndUpdate(
-            { _id: req.params.id },
-            {
-              furniture: foundFurniture,
-              totalPrice: tPrice,
-            },
-            { new: true, runValidators: true },
-          );
+            // You should not be able to update the id
+            Transaction.findOneAndUpdate(
+              {
+                furniture: saleResult.furniture,
+                totalPrice: saleResult.tPrice,
+              },
+              { new: true, runValidators: true },
+            );
           }
         }
-
-        
-    }
+      } else if (transaction.type === "Purchase") {
+        // The stock of the furniture is reset before the transaction,
+        // only if the user changes the furniture
+        if (req.body.furniture) {
+          resetPurchase(transaction.furniture);
+          const saleResult = getPurchase(req.body.furniture);
+          if (!saleResult.furniture) {
+            return res.status(400).send(saleResult);
+          } else {
+            // You should not be able to update the id
+            Transaction.findOneAndUpdate(
+              {
+                furniture: saleResult.furniture,
+                totalPrice: saleResult.tPrice,
+              },
+              { new: true, runValidators: true },
+            );
+          }
+        }
+      }
     } else {
       return res.status(404).send({ error: "Transaction not found" });
     }
-});
+  },
+);
 
+/**
+ * Handles DELETE requests for removing transactions by their ID.
+ * If the transaction type is 'Sale', it resets the sale-related furniture stock.
+ * If the transaction type is 'Purchase', it resets the purchase-related furniture stock.
+ * @param {Request} req - The request object containing the transaction ID.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message or appropriate error message.
+ *
+ * @note CAMBIAR ESTE COMENTARIO POR FAVOR.
+ */
 transactionsRouter.delete(
   "/transactions/:id",
   async (req: Request, res: Response) => {
@@ -371,19 +273,23 @@ transactionsRouter.delete(
       const transaction = await Transaction.findOne({
         _id: req.params.id,
       });
-      if(transaction) {
-        if(transaction.type === "Sale") {
+      if (transaction) {
+        if (transaction.type === "Sale") {
           resetSale(transaction.furniture);
           Transaction.findOneAndDelete({ _id: req.params.id });
-        } else {
+        } else if (transaction.type === "Purchase") {
           resetPurchase(transaction.furniture);
           Transaction.findOneAndDelete({ _id: req.params.id });
-          // Borrar muebles que se han creado?
+        } else {
+          return res
+            .status(404)
+            .send({ error: "Transaction type not admitted" });
         }
       } else {
         return res.status(404).send({ error: "Transaction not found" });
       }
-  }catch{
-    return res.status(500).send(Error);
-  }
-});
+    } catch {
+      return res.status(500).send(Error);
+    }
+  },
+);

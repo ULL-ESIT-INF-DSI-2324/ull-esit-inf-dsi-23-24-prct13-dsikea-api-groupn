@@ -60,7 +60,7 @@ furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
   Furniture.findById(id)
     .then((furniture) => {
       if (furniture) {
-        res.json(furniture);
+        res.status(200).send(furniture);
       } else {
         res.status(404).json({ error: "Furniture not found" });
       }

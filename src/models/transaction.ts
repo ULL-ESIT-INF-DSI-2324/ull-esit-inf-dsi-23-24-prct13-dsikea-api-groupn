@@ -8,7 +8,7 @@ export interface FurnitureTuple {
   quantity: number;
 }
 
-interface ITransaction extends Document {
+export interface ITransaction extends Document {
   type: "Purchase" | "Sale";
   furniture: FurnitureTuple[];
   customer?: typeof customerSchema;
