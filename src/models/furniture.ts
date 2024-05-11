@@ -46,6 +46,12 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
   quantity: {
     type: Number,
     required: true,
+    validate: {
+      validator: function (value: number) {
+        return value >= 0;
+      },
+      message: "Quantity must be a non-negative number",
+    },
   },
   color: {
     type: String,

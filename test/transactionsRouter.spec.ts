@@ -1,7 +1,7 @@
 import request from "supertest";
 import { app } from "../src/indexApp.js";
-import Transaction from "../src/models/transaction.js";
-import { ITransaction } from "../src/models/transaction.js";
+import Transaction, { ITransaction } from "../src/models/transaction.js";
+import Furniture from "../src/models/furniture.js";
 import { firstCustomer, secondCustomer } from "./customersRouter.spec.js";
 import { firstProvider, secondProvider } from "./providerRouter.spec.js";
 import {
@@ -189,175 +189,375 @@ describe("POST /transactions", () => {
       .post("/transactions")
       .send({
         type: "Purchase",
-        provider: firstProvider._id,
+        cif: firstProvider.cif,
         furniture: [
           {
-            furniture: firstFurniture._id,
             quantity: 2,
-          },
-          {
-            furniture: secondFurniture._id,
-            quantity: 1,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
           },
         ],
       })
       .expect(201);
+    expect(response.body.price).to.equal(firstFurniture.price * 2);
+  });
 
-    expect(response.body.provider).to.equal(
+  it("Should create a new purchase transaction with more furnitures and calculate the total price", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Purchase",
+        cif: firstProvider.cif,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+          {
+            quantity: 1,
+            name: secondFurniture.name,
+            material: secondFurniture.material,
+            color: secondFurniture.color,
+          },
+        ],
+      })
+      .expect(201);
+    expect(response.body.price).to.equal(
       firstFurniture.price * 2 + secondFurniture.price,
     );
   });
 
-//   it("Should create a new sale transaction", async () => {
-//     const newTransaction = {
-//       type: "Sale",
-//       customer: firstCustomer._id,
-//       furniture: [
-//         {
-//           furniture: firstFurniture._id,
-//           quantity: 1,
-//         },
-//         {
-//           furniture: thirdFurniture._id,
-//           quantity: 2,
-//         },
-//       ],
-//       date: "2022-01-06T00:00:00.000Z",
-//     };
+  it("Should create a new purchase transaction and calculate the total price", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(201);
+    expect(response.body.price).to.equal(firstFurniture.price * 2);
+  });
 
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(201);
+  it("Should create a new sale transaction with more furnitures and calculate the total price", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+          {
+            quantity: 1,
+            name: secondFurniture.name,
+            material: secondFurniture.material,
+            color: secondFurniture.color,
+          },
+        ],
+      })
+      .expect(201);
+    expect(response.body.price).to.equal(
+      firstFurniture.price * 2 + secondFurniture.price,
+    );
+  });
 
-//     expect(response.body).to.have.property("_id");
-//     expect(response.body.type).to.equal(newTransaction.type);
-//     expect(response.body.customer).to.equal(newTransaction.customer);
-//     expect(response.body.furniture).to.deep.equal(newTransaction.furniture);
-//     expect(response.body.date).to.equal(newTransaction.date);
-//   });
+  it("Should return 400 if there is not enough quantity to sale", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 10,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(400);
+    expect(response.body).to.have.property("error", "Not enough quantity");
+  });
 
-//   it("Should return 400 if transaction type is invalid", async () => {
-//     const newTransaction = {
-//       type: "InvalidType",
-//       customer: firstCustomer._id,
-//       furniture: [
-//         {
-//           furniture: firstFurniture._id,
-//           quantity: 1,
-//         },
-//       ],
-//       date: "2022-01-07T00:00:00.000Z",
-//     };
+  const newFurniture = {
+    name: "New Furniture",
+    description: "New Furniture Description",
+    material: "Wood",
+    dimensions: "100x100x100",
+    quantity: 10,
+    price: 100,
+    color: "Brown",
+  };
 
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(400);
+  new Furniture(newFurniture).save();
 
-//     expect(response.body).to.have.property("error", "Invalid transaction type");
-//   });
+  it("A new piece of furniture must be created in the database if an unknown furniture is purchased", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Purchase",
+        cif: firstProvider.cif,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+          newFurniture,
+        ],
+      })
+      .expect(201);
+    expect(response.body.price).to.equal(
+      firstFurniture.price * 2 + newFurniture.price * newFurniture.quantity,
+    );
+    expect(Furniture.findOne({ name: newFurniture.name })).to.not.be.null;
+  });
 
-//   it("Should return 400 if furniture quantity is invalid", async () => {
-//     const newTransaction = {
-//       type: "Purchase",
-//       provider: firstProvider._id,
-//       furniture: [
-//         {
-//           furniture: firstFurniture._id,
-//           quantity: -1,
-//         },
-//       ],
-//       date: "2022-01-08T00:00:00.000Z",
-//     };
+  it("should not create transactions with negative quantities", async () => {
+    const response_1 = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Purchase",
+        cif: firstProvider.cif,
+        furniture: [
+          {
+            quantity: -2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+          newFurniture,
+        ],
+      })
+      .expect(400);
+    expect(response_1.body).to.have.property(
+      "error",
+      "Quantity must be a positive number",
+    );
 
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(400);
+    const response_2 = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: -2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+          newFurniture,
+        ],
+      })
+      .expect(400);
+    expect(response_2.body).to.have.property(
+      "error",
+      "Quantity must be a positive number",
+    );
+  });
 
-//     expect(response.body).to.have.property(
-//       "error",
-//       "Invalid furniture quantity",
-//     );
-//   });
+  it("should return an error if furniture name is not found", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: "Unknown Furniture",
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(400);
+    expect(response.body).to.have.property("error", "Furniture name not found");
+  });
 
-//   it("Should return 400 if furniture ID is invalid", async () => {
-//     const newTransaction = {
-//       type: "Sale",
-//       customer: firstCustomer._id,
-//       furniture: [
-//         {
-//           furniture: "invalidFurnitureId",
-//           quantity: 1,
-//         },
-//       ],
-//       date: "2022-01-09T00:00:00.000Z",
-//     };
+  it("should return an error if furniture material is not found", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: "Unknown Material",
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(400);
+    expect(response.body).to.have.property(
+      "error",
+      "Furniture material not found",
+    );
+  });
 
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(400);
+  it("should return an error if furniture color is not found", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: "Unknown Color",
+          },
+        ],
+      })
+      .expect(400);
+    expect(response.body).to.have.property(
+      "error",
+      "Furniture color not found",
+    );
+  });
 
-//     expect(response.body).to.have.property("error", "Invalid furniture ID");
-//   });
+  it("should return 500 if trying to purchase a furniture without enough attributes ", async () => {
+    await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: firstCustomer.dni,
+        furniture: [
+          {
+            quantity: 2,
+            name: "Unknown Furniture",
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(400);
+  });
 
-//   it("Should return 400 if provider ID is invalid", async () => {
-//     const newTransaction = {
-//       type: "Purchase",
-//       provider: "invalidProviderId",
-//       furniture: [
-//         {
-//           furniture: firstFurniture._id,
-//           quantity: 1,
-//         },
-//       ],
-//       date: "2022-01-10T00:00:00.000Z",
-//     };
+  it("Should not create a new sale if the customer does not exist", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Sale",
+        dni: "42808994P",
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(404);
+    expect(response.body).to.have.property("error", "Customer not found");
+  });
 
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(400);
-
-//     expect(response.body).to.have.property("error", "Invalid provider ID");
-//   });
-
-//   it("Should return 400 if customer ID is invalid", async () => {
-//     const newTransaction = {
-//       type: "Sale",
-//       customer: "invalidCustomerId",
-//       furniture: [
-//         {
-//           furniture: firstFurniture._id,
-//           quantity: 1,
-//         },
-//       ],
-//       date: "2022-01-11T00:00:00.000Z",
-//     };
-
-//     const response = await request(app)
-//       .post("/transactions")
-//       .send(newTransaction)
-//       .expect(400);
-
-//     expect(response.body).to.have.property("error", "Invalid customer ID");
-//   });
+  it("Should not create a new purchase if the provider does not exist", async () => {
+    const response = await request(app)
+      .post("/transactions")
+      .send({
+        type: "Purchase",
+        cif: "V12345889",
+        furniture: [
+          {
+            quantity: 2,
+            name: firstFurniture.name,
+            material: firstFurniture.material,
+            color: firstFurniture.color,
+          },
+        ],
+      })
+      .expect(404);
+    expect(response.body).to.have.property("error", "Provider not found");
+  });
 });
 
-// it('Should get all transactions', async () => {
-//   const response = await request(app)
-//     .get('/transactions')
-//     .expect(200);
+//###PATCH###//
+describe("PATCH /transactions/:id", () => {
+  it("Should not update a transaction's type", async () => {
+    const response = await request(app)
+      .patch(`/transactions/60d5ec3a8891df7a841211a7`)
+      .send({ type: "Sale" })
+      .expect(400);
+    expect(response.body).to.have.property( "error", "You cannot change the type of transaction");
+  });
 
-//   expect(response.body).to.be.an('array');
-// });
+  it("Should update a transaction's customer", async () => {
+    const response = await request(app)
+      .patch(`/transactions/60d5ec3a8891df7a841211a7`)
+      .send({ customer: firstCustomer._id })
+      .expect(200);
+    expect(response.body).to.have.property("customer", firstCustomer._id);
+  });
 
-// it('Should return 404 if transaction not found', async () => {
-//   const response = await request(app)
-//     .get('/transactions/non_existent_id')
-//     .expect(404);
+  it("Should update a transaction's provider", async () => {
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ provider: secondProvider._id })
+      .expect(200);
+    expect(response.body).to.have.property("provider", secondProvider._id);
+  });
 
-//   expect(response.body).to.have.property('error', 'Transaction not found');
-// });
+  it("Should update a transaction's furniture", async () => {
+    const updatedFurniture = [
+      {
+        _id: "663f4be9ebc05e7bc861f193",
+        furniture: secondFurniture._id,
+        quantity: 2,
+      },
+    ];
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ furniture: updatedFurniture })
+      .expect(200);
+    expect(response.body.furniture).to.deep.equal(updatedFurniture);
+  });
+
+  it("Should update a transaction's date", async () => {
+    const updatedDate = "2022-01-05T00:00:00.000Z";
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ date: updatedDate })
+      .expect(200);
+    expect(response.body).to.have.property("date", updatedDate);
+  });
+
+  it("Should update a transaction's price", async () => {
+    const updatedPrice = 1000;
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ price: updatedPrice })
+      .expect(200);
+    expect(response.body).to.have.property("price", updatedPrice);
+  });
+
+  it("Should return 404 if the transaction ID does not exist", async () => {
+    const response = await request(app)
+      .patch(`/transactions/nonexistentID`)
+      .send({ type: "Sale" })
+      .expect(404);
+    expect(response.body).to.have.property("error", "Transaction not found");
+  });
+});

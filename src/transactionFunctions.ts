@@ -1,6 +1,5 @@
-import Furniture from "./models/furniture.js";
+import Furniture, { IFurniture } from "./models/furniture.js";
 import { FurnitureTuple } from "./models/transaction.js";
-import { Schema } from "mongoose";
 
 /**
  * Interface for the body of a transaction containing furniture details.
@@ -12,11 +11,21 @@ export interface bodyTransFurniture {
   color: string;
 }
 
+export interface FurnitureI {
+  name: string;
+  description: string;
+  material: string;
+  dimensions: { length: number; width: number; height: number };
+  price: number;
+  quantity: number;
+  color: string;
+}
+
 export type TransactionType = {
   type: string;
   provider?: string;
   customer?: string;
-  furniture: { furniture: string; quantity: number; }[];
+  furniture: { furniture: string; quantity: number }[];
   date: Date;
   price: number;
 };
@@ -25,30 +34,30 @@ export type TransactionType = {
  * Resets the quantity of furniture items involved in a purchase transaction.
  * @param transaction - The array of furniture items involved in the transaction.
  */
-export function resetPurchase(transaction: FurnitureTuple[]) {
-  transaction.forEach(async (item: FurnitureTuple) => {
+export async function resetPurchase(transaction: FurnitureTuple[]) {
+  for (const item of transaction) {
     const foundFurniture = await Furniture.findOne({ _id: item.furniture });
     if (!foundFurniture) {
       return { error: "Furniture not found" };
     }
     const resetQuantity = foundFurniture.quantity - item.quantity;
     Furniture.updateOne({ _id: item.furniture }, { quantity: resetQuantity });
-  });
+  }
 }
 
 /**
  * Resets the quantity of furniture items involved in a sale transaction.
  * @param transaction - The array of furniture items involved in the transaction.
  */
-export function resetSale(transaction: FurnitureTuple[]) {
-  transaction.forEach(async (item: FurnitureTuple) => {
+export async function resetSale(transaction: FurnitureTuple[]) {
+  for (const item of transaction) {
     const foundFurniture = await Furniture.findOne({ _id: item.furniture });
     if (!foundFurniture) {
       return { error: "Furniture not found" };
     }
     const resetQuantity = foundFurniture.quantity + item.quantity;
     Furniture.updateOne({ _id: item.furniture }, { quantity: resetQuantity });
-  });
+  }
 }
 
 /**
@@ -56,22 +65,31 @@ export function resetSale(transaction: FurnitureTuple[]) {
  * @param furniture - The array of furniture items in the transaction.
  * @returns The furniture items and the total price of the transaction.
  */
-export function getSale(furniture: bodyTransFurniture[]) {
+/**
+ * Calculates the total price and gathers furniture items for a sale transaction.
+ * @param furniture - The array of furniture items in the transaction.
+ * @returns The furniture items and the total price of the transaction.
+ */
+export async function getSale(
+  furniture: bodyTransFurniture[],
+): Promise<
+  | { furniture: { furniture: string; quantity: number }[]; totalPrice: number }
+  | { error: string }
+> {
   let tPrice: number = 0;
-  const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-  furniture.forEach(async (item: bodyTransFurniture) => {
+  const foundFurniture: [string, number][] = [];
+  for (const item of furniture) {
     const foundFurnitureName = await Furniture.find({ name: item.name });
-    if (!foundFurnitureName) {
+    if (foundFurnitureName.length === 0) {
       return { error: "Furniture name not found" };
     }
     const foundFurnitureMaterial = await Furniture.find({
       name: item.name,
       material: item.material,
     });
-    if (!foundFurnitureMaterial) {
+    if (foundFurnitureMaterial.length === 0) {
       return {
         error: "Furniture material not found",
-        furnitures: foundFurnitureName,
       };
     }
     const foundFurnitureColor = await Furniture.findOne({
@@ -82,17 +100,31 @@ export function getSale(furniture: bodyTransFurniture[]) {
     if (!foundFurnitureColor) {
       return {
         error: "Furniture color not found",
-        furnitures: foundFurnitureMaterial,
       };
     }
-    Furniture.findOneAndUpdate(
+    if (item.quantity <= 0) {
+      return {
+        error: "Quantity must be a positive number",
+      };
+    }
+    if (foundFurnitureColor.quantity < item.quantity) {
+      return {
+        error: "Not enough quantity",
+      };
+    }
+    await Furniture.updateOne(
       { _id: foundFurnitureColor._id },
-      { quantity: foundFurnitureColor.quantity + item.quantity },
+      { quantity: foundFurnitureColor.quantity - item.quantity },
     );
     tPrice += foundFurnitureColor.price * item.quantity;
     foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-  });
-  return { furniture: foundFurniture, tPrice: tPrice };
+  }
+  // console.log("Antes de enviar: ", foundFurniture, tPrice);
+  const formattedFurniture = foundFurniture.map(([furniture, quantity]) => ({
+    furniture,
+    quantity,
+  }));
+  return { furniture: formattedFurniture, totalPrice: tPrice };
 }
 
 /**
@@ -100,41 +132,40 @@ export function getSale(furniture: bodyTransFurniture[]) {
  * @param furniture - The array of furniture items in the transaction.
  * @returns The furniture items and the total price of the transaction.
  */
-export function getPurchase(furniture: bodyTransFurniture[]) {
+export async function getPurchase(
+  furniture: IFurniture[],
+): Promise<
+  | { furniture: { furniture: string; quantity: number }[]; totalPrice: number }
+  | { error: string }
+> {
   let tPrice: number = 0;
-  const foundFurniture: [Schema.Types.ObjectId, number][] = [];
-  furniture.forEach(async (item: bodyTransFurniture) => {
-    const foundFurnitureName = await Furniture.find({ name: item.name });
-    if (!foundFurnitureName) {
-      return { error: "Furniture name not found" };
-    }
-    const foundFurnitureMaterial = await Furniture.find({
-      name: item.name,
-      material: item.material,
-    });
-    if (!foundFurnitureMaterial) {
-      return {
-        error: "Furniture material not found",
-        furnitures: foundFurnitureName,
-      };
-    }
-    const foundFurnitureColor = await Furniture.findOne({
+  const foundFurniture: [string, number][] = [];
+  for (const item of furniture) {
+    let foundFurnitureObject = await Furniture.findOne({
       name: item.name,
       material: item.material,
       color: item.color,
     });
-    if (!foundFurnitureColor) {
+    if (item.quantity <= 0) {
       return {
-        error: "Furniture color not found",
-        furnitures: foundFurnitureMaterial,
+        error: "Quantity must be a positive number",
       };
     }
-    Furniture.findOneAndUpdate(
-      { _id: foundFurnitureColor._id },
-      { quantity: foundFurnitureColor.quantity + item.quantity },
-    );
-    tPrice += foundFurnitureColor.price * item.quantity;
-    foundFurniture.push([foundFurnitureColor._id, item.quantity]);
-  });
-  return { furniture: foundFurniture, tPrice: tPrice };
+    if (!foundFurnitureObject) {
+      foundFurnitureObject = new Furniture(item);
+    } else {
+      await Furniture.updateOne(
+        { _id: foundFurnitureObject._id },
+        { quantity: foundFurnitureObject.quantity + item.quantity },
+      );
+    }
+    tPrice += foundFurnitureObject.price * item.quantity;
+    foundFurniture.push([foundFurnitureObject._id, item.quantity]);
+  }
+  // console.log("Antes de enviar: ", foundFurniture, tPrice);
+  const formattedFurniture = foundFurniture.map(([furniture, quantity]) => ({
+    furniture,
+    quantity,
+  }));
+  return { furniture: formattedFurniture, totalPrice: tPrice };
 }

@@ -4,6 +4,7 @@ import Customer from "../models/customer.js";
 import Provider from "../models/provider.js";
 import {
   bodyTransFurniture,
+  FurnitureI,
   resetPurchase,
   resetSale,
   getSale,
@@ -132,18 +133,18 @@ transactionsRouter.post(
               color: item.color,
             }),
           );
-          const saleResult = getSale(furniture);
-          console.log(saleResult);
-          if (saleResult.furniture.length === 0) {
-            return res.status(400).send({ error: "Furniture not found" });
+          // console.log(furniture);
+          const saleResult = await getSale(furniture);
+          if ("error" in saleResult) {
+            return res.status(400).send(saleResult);
           } else {
+            // console.log(saleResult);
             const transaction = new Transaction({
               type: req.body.type,
               furniture: saleResult.furniture,
               customer: customer._id,
-              time: req.body.time,
-              date: req.body.date,
-              totalPrice: saleResult.tPrice,
+              date: new Date(),
+              price: saleResult.totalPrice,
             });
             const newTransaction = await transaction.save();
             return res.status(201).send(newTransaction);
@@ -152,31 +153,34 @@ transactionsRouter.post(
           return res.status(404).send({ error: "Customer not found" });
         }
       } catch (error) {
+        console.error(error);
         return res.status(500).send(error);
       }
-    } else if (req.query.cif && req.query.type === "Purchase") {
+    } else if (req.body.cif && req.body.type === "Purchase") {
       try {
-        const provider = await Provider.findOne({ cif: req.query.cif });
+        const provider = await Provider.findOne({ cif: req.body.cif });
         if (provider) {
-          const furniture = req.body.furniture.map(
-            (item: bodyTransFurniture) => ({
-              quantity: item.quantity,
-              name: item.name,
-              material: item.material,
-              color: item.color,
-            }),
-          );
-          const purchaseResult = getPurchase(furniture);
-          if (purchaseResult.furniture.length === 0) {
-            return res.status(400).send({ error: "Furniture not found" });
+          const furniture = req.body.furniture.map((item: FurnitureI) => ({
+            name: item.name,
+            description: item.description,
+            material: item.material,
+            dimensions: item.dimensions,
+            price: item.price,
+            quantity: item.quantity,
+            color: item.color,
+          }));
+          // console.log(furniture);
+          const purchaseResult = await getPurchase(furniture);
+          if ("error" in purchaseResult) {
+            return res.status(400).send(purchaseResult);
           } else {
+            // console.log(purchaseResult);
             const transaction = new Transaction({
               type: req.body.type,
               furniture: purchaseResult.furniture,
               provider: provider._id,
-              time: req.body.time,
-              date: req.body.date,
-              totalPrice: purchaseResult.tPrice,
+              date: new Date(),
+              price: purchaseResult.totalPrice,
             });
             const newTransaction = await transaction.save();
             return res.status(201).send(newTransaction);
@@ -185,8 +189,11 @@ transactionsRouter.post(
           return res.status(404).send({ error: "Provider not found" });
         }
       } catch (error) {
+        console.error(error);
         return res.status(500).send(error);
       }
+    } else {
+      return res.status(400).send({ error: "Invalid transaction type" });
     }
   },
 );
@@ -200,7 +207,7 @@ transactionsRouter.post(
 transactionsRouter.patch(
   "/transactions:id",
   async (req: Request, res: Response) => {
-    const transaction = await Transaction.findOneAndUpdate({
+    const transaction = await Transaction.findOne({
       _id: req.params.id,
     });
     if (transaction) {
@@ -217,15 +224,18 @@ transactionsRouter.patch(
               color: item.color,
             }),
           );
-          const saleResult = getSale(furnitureMap);
-          if (!saleResult.furniture) {
+          const saleResult = await getSale(furnitureMap);
+          if ("error" in saleResult) {
             return res.status(400).send(saleResult);
           } else {
-            // You should not be able to update the id
-            Transaction.findOneAndUpdate(
+            // You should not be able to update the id and the type
+            if(req.body.type === "Purchase") {
+              return res.status(400).send({ error: "You cannot change the type of transaction" });
+            }
+            await Transaction.updateOne(
               {
                 furniture: saleResult.furniture,
-                totalPrice: saleResult.tPrice,
+                price: saleResult.totalPrice,
               },
               { new: true, runValidators: true },
             );
@@ -236,15 +246,18 @@ transactionsRouter.patch(
         // only if the user changes the furniture
         if (req.body.furniture) {
           resetPurchase(transaction.furniture);
-          const saleResult = getPurchase(req.body.furniture);
-          if (!saleResult.furniture) {
-            return res.status(400).send(saleResult);
+          const purchaseResult = await getPurchase(req.body.furniture);
+          if ("error" in purchaseResult) {
+            return res.status(400).send(purchaseResult);
           } else {
-            // You should not be able to update the id
-            Transaction.findOneAndUpdate(
+            // You should not be able to update the id and the type
+            if(req.body.type === "Sale") {
+              return res.status(400).send({ error: "You cannot change the type of transaction" });
+            }
+            await Transaction.updateOne(
               {
-                furniture: saleResult.furniture,
-                totalPrice: saleResult.tPrice,
+                furniture: purchaseResult.furniture,
+                totalPrice: purchaseResult.totalPrice,
               },
               { new: true, runValidators: true },
             );
