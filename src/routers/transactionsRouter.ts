@@ -133,8 +133,9 @@ transactionsRouter.post(
             }),
           );
           const saleResult = getSale(furniture);
-          if (!saleResult.furniture) {
-            return res.status(400).send(saleResult);
+          console.log(saleResult);
+          if (saleResult.furniture.length === 0) {
+            return res.status(400).send({ error: "Furniture not found" });
           } else {
             const transaction = new Transaction({
               type: req.body.type,
@@ -166,8 +167,8 @@ transactionsRouter.post(
             }),
           );
           const purchaseResult = getPurchase(furniture);
-          if (!purchaseResult.furniture) {
-            return res.status(400).send(purchaseResult);
+          if (purchaseResult.furniture.length === 0) {
+            return res.status(400).send({ error: "Furniture not found" });
           } else {
             const transaction = new Transaction({
               type: req.body.type,
