@@ -636,15 +636,68 @@ Prueba la respuesta cuando el formato del ID del mueble no es válido.
 
 ## Despliegue API
 
+El proyecto tambien requería en última instancia de **desplegar** el **API**, para ello hacemos uso de dos herramientas: **MogoDB Atlas** y **Render**
+
 ### MongoDB Atlas
+
+Debemos crearnos una cuenta en **MongoDB Atlas** y en ella crear un _cluster_ donde alojar nuestra base de datos, luego posteriormente descargamos **MongoDB Compass**, que aunque realmente no es necesario nos permite contar con una **interfaz gráfica** de la base de datos que estamos usando. Para conectar la base de datos con **Compass** usamos el enlace propio de la base de datos que se encuentra en **Atlas**.
 
 > **[Volver al índice](#índice)**
 
 ### Render
 
+**Render** es una plataforma de alojamiento y **despliegue** que proporciona una infraestructura robusta y escalable para aplicaciones web y APIs. Su papel en el **despliegue** de APIs es facilitar el proceso de implementación y gestión de aplicaciones, pero lamentablemente no cuenta con una base de datos propia, es por ello que debemos de crear una variable de entorno _MOGODB_URL_ que contenga el enlace a la base de datos que hemos creado previamente en **MongoDB Atlas**. También debemos añadir dos scripts en nuestro _package.json_ que al ser usados en Render permiten desplegar el API por completo. Por último para que nuestro programa entienda que debe usar la variable de entorno _MOGODB_URL_ debemos de modificar nuestra conección usando _"proccess.env"_.
+
+```ts
+connect(process.env.MONGODB_URL!)
+  .then(() => {
+    console.log("Connected to the database");
+  })
+  .catch(() => {
+    console.log("Something went wrong when conecting to the database");
+    process.exit(-1);
+  });
+```
+
 > **[Volver al índice](#índice)**
 
 ## Peticiones
+
+Una vez hayamos comprobado que el despliegue de la API funcione correctamente, podremos enviar peticiones a la API usando, en nuestro caso, la siguiente url: _"https://ull-esit-inf-dsi-23-24-prct13-dsikea-api-822e.onrender.com"_
+
+Aquí se muestran algunas de las peticiones que se llevan cabo usando ThunderClient en la ruta customers mostrando el correcto funcionamiento del API desplegada:
+
+- Se realiza una petición GET a la ruta /customers y obtenemos una lista vacía ya que ahora mismo no se encuentra ningún dato en la base de datos sobre clientes:
+
+![Petición GET /customers](images/peticiones-customers/peticion-post-customers.png)
+
+- Creamos una petición POST adjuntando en el cuerpo el JSON necesario para la creación de un cliente:
+
+![Petición POST /customers](images/peticiones-customers/peticion-post-customers.png)
+
+- Volvemos a realizar la petición GET para comprobar que el cliente ha sido añadido:
+
+![Petición GET /customers luego de POST](images/peticiones-customers/peticion-get-customers-2.png)
+
+- En este punto podemos comprobar en Atlas si se ha creado el documento:
+
+![Comprobación Atlas documento Customer](images/peticiones-customers/customer-compass.png)
+
+- Comprobamos si se puede actualizar la información de un cliente usando su dni:
+
+![Petición PATCH /customers](images/peticiones-customers/peticion-patch-customers.png)
+
+- Comprobamos que haya surtido efecto en la base de datos realizando la petción GET y comprobando que los atributos hayan sido cambiados:
+
+![Petición GET /customers luego de PATCH](images/peticiones-customers/peticion-get-customers-3.png)
+
+- Por último eliminamos el cliente:
+
+![Petición DELETE /customers](images/peticiones-customers/peticion-delete-customers.png)
+
+- Y por supuesto, visualizamos a través de la petición GET si se ha eliminado correctamente:
+
+![Petición GET /customers luego de DELETE](images/peticiones-customers/peticion-get-customers-4.png)
 
 > **[Volver al índice](#índice)**
 
