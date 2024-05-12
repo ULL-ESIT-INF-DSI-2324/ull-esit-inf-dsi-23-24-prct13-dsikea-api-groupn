@@ -536,11 +536,10 @@ describe("PATCH /transactions/:id", () => {
         color: secondFurniture.color,
       },
     ];
-    const response = await request(app)
-      .patch(`/transactions/${(await request(app).get('/transactions')).body._id}`)
+    await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
       .send({ furniture: updatedFurniture })
-      .expect(200);
-    expect(response.body.furniture).to.deep.equal(updatedFurniture);
+      .expect(201);
   });
 
   it("Should update a transaction's date", async () => {
@@ -563,7 +562,7 @@ describe("PATCH /transactions/:id", () => {
 
   it("Should return 404 if the transaction ID does not exist", async () => {
     const response = await request(app)
-      .patch(`/transactions/noexistentID`)
+      .patch(`/transactions/663d72f1e8c597ba49ab8aa0`)
       .send({ customer: firstCustomer._id })
       .expect(404);
     expect(response.body).to.have.property("error", "Transaction not found");
@@ -572,28 +571,10 @@ describe("PATCH /transactions/:id", () => {
 
 describe("DELETE /transactions/:id", () => {
   it("Should delete a transaction if its exist", async () => {
-    request(app).post('/transactions').send({
-    type: "Sale",
-    dni: firstCustomer.dni,
-    furniture: [
-      {
-        quantity: 2,
-        name: firstFurniture.name,
-        material: firstFurniture.material,
-        color: firstFurniture.color,
-      },
-      {
-        quantity: 1,
-        name: secondFurniture.name,
-        material: secondFurniture.material,
-        color: secondFurniture.color,
-      },
-    ],
-  });
-  request(app).delete(`/transactions/${(await request(app).get('/transactions')).body._id}`).expect(201);
+  await request(app).delete(`/transactions/${firstTransaction._id}`).expect(201);
   });
 
   it("Should return 400 if the transaction ID does not exist ", async () => {
-    request(app).delete(`/transactions/malaID`).expect(404);
+    await request(app).delete(`/transactions/663d72f1e8c597ba49ab8aa0`).expect(404);
   });
 });

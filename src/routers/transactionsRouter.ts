@@ -310,9 +310,11 @@ transactionsRouter.delete(
         if (transaction.type === "Sale") {
           resetSale(transaction.furniture);
           Transaction.findOneAndDelete({ _id: req.params.id });
+          return res.status(201).send("Transaction deleted");
         } else if (transaction.type === "Purchase") {
           resetPurchase(transaction.furniture);
           Transaction.findOneAndDelete({ _id: req.params.id });
+          return res.status(201).send("Transaction deleted");
         } else {
           return res
             .status(404)
