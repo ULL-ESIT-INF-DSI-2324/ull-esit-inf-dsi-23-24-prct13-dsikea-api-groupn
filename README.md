@@ -828,6 +828,10 @@ Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
 
 Prueba la respuesta cuando el formato del ID del mueble no es válido.
 
+### Tests Transactions
+
+Estos tests se realizan de la misma manera que los anteriores, realizando peticiones y comprobando el status que devuelve, para esto debemos de implementar bien la lógica en las peticiones y que devuelvan los códigos de status correctamente, así que para tipos de peticiones como el patch, hemos implementado primero las pruebas y después la lógica para ir programando respecto a ellas.
+
 > **[Volver al índice](#índice)**
 
 ## Despliegue API
