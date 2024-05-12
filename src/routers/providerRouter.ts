@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import Provider from "../models/provider.js";
-// import { providerSchema } from "../models/provider.js";
 
 export const providerRouter = express.Router();
 providerRouter.use(express.json());
