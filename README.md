@@ -632,6 +632,226 @@ Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
 
 Prueba la respuesta cuando el formato del ID del mueble no es válido.
 
+### /transactions
+
+Nos adentramos en la más complicada de las rutas debido a la cantidad de comprobaciones que hay que hacer y a la lógica que hay detrás de esta, esta ruta controlará el stock y como vimos en los esquemás tendrá que tener referencias a proveedores, a clientes y a los muebles implicados, la petición `get` es bastante sencilla, vamos a destacar la primera de ellas, contendrá casos como los siguientes:
+
+1. No especificar nada en la query string con la ruta /transactions.
+
+```typescript
+  if (Object.keys(req.query).length === 0) {
+    try {
+      const transactions = await Transaction.find();
+      if (transactions) {
+        return res.send(transactions);
+      } else {
+        return res.status(404).send({ error: "Transactions not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
+    }
+  }
+```
+En este caso lo que se hará es mostrar todas las transacciones disponibles.
+
+2. Se encuentra el DNI en la query.
+
+```typescript
+ if (req.query.dni) {
+      try {
+        const customer = await Customer.findOne({ dni: req.query.dni });
+        if (customer) {
+          const transactions = await Transaction.find({
+            customer: customer._id,
+          });
+          if (transactions) {
+            return res.send(transactions);
+          } else {
+            return res.status(404).send({ error: "Transactions not found" });
+          }
+        } else {
+          return res.status(404).send({ error: "Customer not found" });
+        }
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+  }
+``` 
+En este caso buscaremos las transacciones con este campo, tras haber comprobado que el cliente realmente existe con la 3 línea en código anterior, linea que usaremos en el resto del código para realizar la misma comprobación. Además el código será muy parecido los proveedores.
+
+3. Intervalo de fechas.
+
+```typescript
+    } else if (req.query.Idate && req.query.Fdate) {
+      try {
+        const transactions = await Transaction.find({
+          date: { $gte: req.query.Idate, $lte: req.query.Fdate },
+        });
+        if (transactions) {
+          return res.send(transactions);
+        } else {
+          return res.status(404).send({ error: "Transactions not found" });
+        }
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+    }
+```
+
+Vemos como el mismo find nos da la opción de realizar la búsqueda con un intervalo de fechas.
+
+4. Busqueda mediante la ruta /transactions/id
+
+```typescript
+transactionsRouter.get(
+  "/transactions/:id",
+  async (req, res) => {
+    try {
+      const transaction = await Transaction.findOne({ _id: req.params.id });
+      if (transaction) {
+        return res.status(201).send(transaction);
+      } else {
+        return res.status(404).send({ error: "Transaction not found" });
+      }
+    } catch (error) {
+      return res.status(500).send(error);
+    }
+  },
+);
+``` 
+Simplemente buscaremos por el dni pasado como parámetro.
+
+
+Siguiendo con las peticiones viene una de las complicadas debido a las comprobaciones siendo esta el `post`, En nuestro caso se comprobarán las siguientes condiciones:
+
+- Si hay un DNI el tipo debe de ser "Sale" y si es un CIF debe de ser "purchase".
+- Se comprueba que exista un cliente/proveedor al que pertenezca ese CIF/DNI.
+- Para las ventas se comprueba que el mueble exista y además que hayan existencias.
+- Para las compras a proveedores, se comprueba que existan los muebles y además se sumará la cantidad adquirida al stock.
+
+La petición que se lleva la palma en cuanto a lógica se refiere es `patch` que sirve para modificar una transacción, más o menos se utilizar la misma lógica que en la anterior (post) pero, si el usuario quiere cambiar los muebles, se utiliza la siguiente función para dejar el stock como estaba antes de realizar la transacción actual:
+
+```typescript
+export async function resetPurchase(transaction: FurnitureTuple[]) {
+  for (const item of transaction) {
+    const foundFurniture = await Furniture.findOne({ _id: item.furniture });
+    if (!foundFurniture) {
+      return { error: "Furniture not found" };
+    }
+    const resetQuantity = foundFurniture.quantity - item.quantity;
+    Furniture.updateOne({ _id: item.furniture }, { quantity: resetQuantity });
+  }
+}
+```
+
+Al hacer esto reestablecemos el stock anterior a la transacción, y gracias a la función anterior:
+
+```typescript
+export async function getPurchase(
+  furniture: IFurniture[],
+): Promise<
+  | { furniture: { furniture: string; quantity: number }[]; totalPrice: number }
+  | { error: string }
+> {
+  let tPrice: number = 0;
+  const foundFurniture: [string, number][] = [];
+  for (const item of furniture) {
+    let foundFurnitureObject = await Furniture.findOne({
+      name: item.name,
+      material: item.material,
+      color: item.color,
+    });
+    if (item.quantity <= 0) {
+      return {
+        error: "Quantity must be a positive number",
+      };
+    }
+    if (!foundFurnitureObject) {
+      foundFurnitureObject = new Furniture(item);
+    } else {
+      await Furniture.updateOne(
+        { _id: foundFurnitureObject._id },
+        { quantity: foundFurnitureObject.quantity + item.quantity },
+      );
+    }
+    tPrice += foundFurnitureObject.price * item.quantity;
+    foundFurniture.push([foundFurnitureObject._id, item.quantity]);
+  }
+  // console.log("Antes de enviar: ", foundFurniture, tPrice);
+  const formattedFurniture = foundFurniture.map(([furniture, quantity]) => ({
+    furniture,
+    quantity,
+  }));
+  return { furniture: formattedFurniture, totalPrice: tPrice };
+}
+```
+Haremos que se modifique el stock con los muebles que desea poner el usuario en dicha transacción. Por último cada vez que se utiliza el comando `findOneAndUpdate` se utilizará una variable booleana llamada `update`, que se comprobará que sea verdadera al final de la petición para hacer saber al usuario que la petición ha sido completada con éxito o no. A continuación 2 ejemplos sobre el uso de `update`, y la lógica final.
+
+```typescript
+  if (req.body.date) {
+    Transaction.findByIdAndUpdate(
+      { _id: req.params.id },
+      { date: req.body.date },
+      { new: true, runValidators: true },
+    );
+    update = true;
+  }
+```
+
+```typescript
+if (transaction.type === "Sale") {
+    if (req.body.customer) {
+      const customer = await Customer.findOne({ _id: req.body.customer });
+      if (customer) {
+        Transaction.findByIdAndUpdate(
+          { _id: req.params.id },
+          { customer: req.body.customer },
+          { new: true, runValidators: true },
+        );
+        update = true;
+      } else {
+        return res.status(404).send({ error: "Customer not found" });
+      }
+```
+
+```typescript
+  if(update) {
+      return res.status(201).send({ message: "Transaction updated" });
+  } else{
+      return res.status(400).send({ error: "No valid fields to update" });
+  }
+```
+
+Finalizando con la ruta, comentaremos la petición `delete`, creemos que al eliminar una transacción, el stock debe de volver a como estaba antes de ella, por lo que utilizaremos las funciones anteirores `resetPruchase` y `resetSale`, además creemos que no deberían de borrarse las transacciones aun que se haya borrado el cliente o el proveedor al que se le hizo de la base de datos.
+
+```typescript
+transactionsRouter.delete(
+  "/transactions/:id",
+  async (req: Request, res: Response) => {
+    try {
+      const transaction = await Transaction.findOne({
+        _id: req.params.id,
+      });
+      if (transaction) {
+        if (transaction.type === "Sale") {
+          resetSale(transaction.furniture);
+          Transaction.findOneAndDelete({ _id: req.params.id });
+          return res.status(201).send("Transaction deleted");
+        } else if (transaction.type === "Purchase") {
+          resetPurchase(transaction.furniture);
+          Transaction.findOneAndDelete({ _id: req.params.id });
+          return res.status(201).send("Transaction deleted");
+        }
+      } else {
+        return res.status(404).send({ error: "Transaction not found" });
+      }
+    } catch {
+      return res.status(500).send(Error);
+    }
+  },
+);
+```
+
 > **[Volver al índice](#índice)**
 
 ## Despliegue API
