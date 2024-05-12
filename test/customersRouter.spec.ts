@@ -20,7 +20,7 @@ export const firstCustomer = {
   contact: "+34666666666",
   postalCode: "34556",
   email: "esegredo@example.com",
-  dni: "43549856D",
+  dni: "12345678Z",
 };
 
 export const secondCustomer = {
@@ -29,7 +29,7 @@ export const secondCustomer = {
   contact: "+34645678976",
   postalCode: "39556",
   email: "aleoo@example.com",
-  dni: "47540859E",
+  dni: "56789012B",
 };
 
 beforeEach(async () => {
@@ -44,7 +44,7 @@ beforeEach(async () => {
 describe("GET /customer", () => {
   it("Should get a user by username with the dni in the query", async () => {
     const response = await request(app)
-      .get("/customers?dni=43549856D")
+      .get("/customers?dni=12345678Z")
       .expect(200);
     expect(response.body).to.include(
       firstCustomer,
@@ -102,7 +102,7 @@ describe("POST /customers", () => {
         contact: "+34662345696",
         postalCode: "39556",
         email: "daniel@uk.com",
-        dni: "73799876A",
+        dni: "89012345E",
       })
       .expect(201);
     expect(response.body).to.include({
@@ -110,7 +110,7 @@ describe("POST /customers", () => {
       contact: "+34662345696",
       postalCode: "39556",
       email: "daniel@uk.com",
-      dni: "73799876A",
+      dni: "89012345E",
     });
   });
 
@@ -122,7 +122,7 @@ describe("POST /customers", () => {
         contact: "+34666666666",
         postalCode: "34556",
         email: "esegredo@example.com",
-        dni: "43549856D",
+        dni: "12345678Z",
       })
       .expect(400);
     expect(response.body.error).to.eql("DNI already exists");
@@ -136,7 +136,7 @@ describe("POST /customers", () => {
         contact: "+84676686666",
         postalCode: "34556",
         email: "anton@example.com",
-        dni: "47549859D",
+        dni: "89012345E",
       })
       .expect(500);
     expect(response.text).to.eql(
@@ -150,7 +150,7 @@ describe("POST /customers", () => {
 describe("PATCH /customers", () => {
   it("Should successfully modify a customer", async () => {
     const response = await request(app)
-      .patch("/customers?dni=47540859E")
+      .patch("/customers?dni=56789012B")
       .send({
         name: "Alejandro Martinez",
         contact: "+34777345695",
@@ -158,7 +158,7 @@ describe("PATCH /customers", () => {
       })
       .expect(200);
     expect(response.body).to.include({
-      dni: "47540859E",
+      dni: "56789012B",
       name: "Alejandro Martinez",
       contact: "+34777345695",
       postalCode: "55555",
@@ -166,7 +166,7 @@ describe("PATCH /customers", () => {
   });
   it("Not should successfully modify a customer other atributes like _id", async () => {
     const response = await request(app)
-      .patch("/customers?dni=47540859E")
+      .patch("/customers?dni=56789012B")
       .send({
         _id: "00000000000000000000",
         name: "Alejandro Martinez",
@@ -205,7 +205,7 @@ describe("PATCH /customers/:id", () => {
       })
       .expect(200);
     expect(response.body).to.include({
-      dni: "47540859E",
+      dni: "56789012B",
       name: "Alejandro Martinez Gonzalez",
       email: "alemarti@hotmail.es",
       postalCode: "66666",
@@ -264,7 +264,7 @@ describe("DELETE /customers/:id", () => {
 describe("DELETE /customers", () => {
   it("Should successfully delete a customer", async () => {
     const response = await request(app)
-      .delete("/customers?dni=47540859E")
+      .delete("/customers?dni=56789012B")
       .expect(200);
     expect(response.body).to.eql({
       message: "Customer deleted",
@@ -273,7 +273,7 @@ describe("DELETE /customers", () => {
 
   it("Not should delete a customer, not found a customer", async () => {
     const response = await request(app)
-      .patch("/customers?dni=48888888A")
+      .patch("/customers?dni=45678901A")
       .expect(404);
     expect(response.body).to.eql({
       error: "Customer not found",

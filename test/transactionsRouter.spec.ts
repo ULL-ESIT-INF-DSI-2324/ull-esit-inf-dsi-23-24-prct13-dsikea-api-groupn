@@ -129,7 +129,7 @@ describe("GET /transactions", () => {
 
   it("Should get transactions associated with a customer's ID number if dni query parameter is provided", async () => {
     const response = await request(app)
-      .get("/transactions?dni=43549856D")
+      .get("/transactions?dni=12345678Z")
       .expect(200);
     expect(
       response.body.map((transaction: ITransaction) => ({
@@ -146,7 +146,7 @@ describe("GET /transactions", () => {
 
   it("Should get transactions associated with a provider's ID number if cif query parameter is provided", async () => {
     const response = await request(app)
-      .get("/transactions?cif=A12345678")
+      .get("/transactions?cif=E34567891")
       .expect(200);
     expect(
       response.body.map((transaction: ITransaction) => ({

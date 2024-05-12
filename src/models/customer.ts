@@ -9,6 +9,11 @@ export interface ICustomer extends Document {
   dni: string;
 }
 
+function calcularLetraDNI(numeroDNI: number) {
+  const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  const resto = numeroDNI % 23;
+  return letras.charAt(resto);
+}
 export const customerSchema: Schema = new Schema<ICustomer>({
   name: { type: String, required: true },
   contact: {
@@ -39,7 +44,11 @@ export const customerSchema: Schema = new Schema<ICustomer>({
     type: String,
     required: true,
     validate: {
-      validator: (value: string) => /^[0-9]{8}[A-Z]$/.test(value),
+      validator: (value: string) => {
+        const numeroDNI = parseInt(value.slice(0, -1), 10);
+        const letraDNI = value.slice(-1);
+        return letraDNI === calcularLetraDNI(numeroDNI);
+      },
       message: "Invalid DNI",
     },
   },

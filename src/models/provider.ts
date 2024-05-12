@@ -35,10 +35,27 @@ export const providerSchema: Schema = new Schema<IProvider>({
     required: true,
     validate: {
       validator: (value: string) => {
+        const control = 'JABCDEFGHI';
+        const digit = value.slice(1, -1);
+        const letter = value.charAt(0);
+        const controlDigit = value.slice(-1);
+  
+        let sum = 0;
+        for (let i = 0; i < digit.length; i++) {
+          const num = parseInt(digit.charAt(i), 10);
+          if (i % 2 === 0) {
+            sum += [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][num];
+          } else {
+            sum += num;
+          }
+        }
+  
+        const calculatedControlDigit = sum % 10 === 0 ? 0 : 10 - (sum % 10);
         return (
-          validator.isAlphanumeric(value) &&
-          value.length === 9 &&
-          value[0] === value[0].toUpperCase()
+          /^[ABCDEFGHJNPQRSUVW]{1}/.test(letter) &&
+          digit.length === 7 &&
+          (controlDigit === calculatedControlDigit.toString() ||
+            controlDigit === control.charAt(calculatedControlDigit))
         );
       },
       message: "Invalid CIF",

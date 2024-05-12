@@ -9,7 +9,7 @@ export const firstProvider = {
   name: "Juan Pablo",
   contact: "+34612345678",
   postalCode: "28001",
-  cif: "A12345678",
+  cif: "E34567891",
 };
 
 export const secondProvider = {
@@ -17,7 +17,7 @@ export const secondProvider = {
   name: "Sofia Fernandez",
   contact: "+34687654321",
   postalCode: "28002",
-  cif: "B87654321",
+  cif: "A12345674",
 };
 
 beforeEach(async () => {
@@ -32,7 +32,7 @@ beforeEach(async () => {
 describe("GET /providers", () => {
   it("Should get a user by username with the cif in the query", async () => {
     const response = await request(app)
-      .get("/providers?cif=A12345678")
+      .get("/providers?cif=E34567891")
       .expect(200);
     expect(response.body).to.include(firstProvider);
   });
@@ -103,7 +103,7 @@ describe("POST /providers", () => {
         name: "Eduardo Segredo",
         contact: "+34666666666",
         postalCode: "34556",
-        cif: "A12345678",
+        cif: "E34567891",
       })
       .expect(400);
     expect(response.body.error).to.eql("CIF already exists");
@@ -116,7 +116,7 @@ describe("POST /providers", () => {
         name: "Antonio Mendez",
         contact: "+84676686666",
         postalCode: "34556",
-        cif: "A12345650",
+        cif: "C23456783",
       })
       .expect(500);
     expect(response.text).to.eql(
@@ -130,7 +130,7 @@ describe("POST /providers", () => {
 describe("PATCH /providers", () => {
   it("Should successfully modify a provider", async () => {
     const response = await request(app)
-      .patch("/providers?cif=B87654321")
+      .patch("/providers?cif=A12345674")
       .send({
         name: "Alejandro Martinez",
         contact: "+34777345695",
@@ -138,7 +138,7 @@ describe("PATCH /providers", () => {
       })
       .expect(200);
     expect(response.body).to.include({
-      cif: "B87654321",
+      cif: "A12345674",
       name: "Alejandro Martinez",
       contact: "+34777345695",
       postalCode: "55555",
@@ -146,7 +146,7 @@ describe("PATCH /providers", () => {
   });
   it("Not should successfully modify a provider other atributes like _id", async () => {
     const response = await request(app)
-      .patch("/providers?cif=B87654321")
+      .patch("/providers?cif=A12345674")
       .send({
         _id: "00000000000000000000",
         name: "Alejandro Martinez",
@@ -184,7 +184,7 @@ describe("PATCH /providers/:id", () => {
       })
       .expect(200);
     expect(response.body).to.include({
-      cif: "B87654321",
+      cif: "A12345674",
       name: "Alejandro Martinez Gonzalez",
       postalCode: "66666",
     });
@@ -240,7 +240,7 @@ describe("DELETE /providers/:id", () => {
 describe("DELETE /providers", () => {
   it("Should successfully delete a provider", async () => {
     const response = await request(app)
-      .delete("/providers?cif=B87654321")
+      .delete("/providers?cif=A12345674")
       .expect(200);
     expect(response.body).to.eql({
       message: "Provider deleted",
