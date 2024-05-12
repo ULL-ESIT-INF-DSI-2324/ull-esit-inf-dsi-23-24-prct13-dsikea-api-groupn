@@ -5,8 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsc-watch --onSuccess \"node dist/src/index.js\"",
-    "dev": "tsc-watch --onSuccess \"env-cmd -f ./config/dev.env node dist/indexApp.js\"",
+    "build": "tsc",
+    "start": "tsc-watch --onSuccess \"node dist/src/indexApp.js\"",
+    "dev": "tsc-watch --onSuccess \"env-cmd -f ./config/dev.env node dist/src/indexApp.js\"",
     "test": "env-cmd -f ./config/test.env mocha --exit",
     "coverage": "c8 npm test && c8 report --reporter=lcov",
     "doc": "typedoc --out docs src/**/*.ts; touch docs/.nojekyll"
