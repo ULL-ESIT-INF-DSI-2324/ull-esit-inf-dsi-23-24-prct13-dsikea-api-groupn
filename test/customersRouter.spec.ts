@@ -46,9 +46,7 @@ describe("GET /customers", () => {
     const response = await request(app)
       .get("/customers?dni=12345678Z")
       .expect(200);
-    expect(response.body).to.include(
-      firstCustomer,
-    );
+    expect(response.body).to.include(firstCustomer);
   });
   it("Should find all customers", async () => {
     const response = await request(app).get("/customers").expect(200);
@@ -61,10 +59,7 @@ describe("GET /customers", () => {
         email: customer.email,
         dni: customer.dni,
       })),
-    ).to.deep.include.members([
-      firstCustomer,
-      secondCustomer,
-    ]);
+    ).to.deep.include.members([firstCustomer, secondCustomer]);
   });
   it("Not Should find a user by username beacuse not exist this DNI un the query", async () => {
     const response = await request(app)
@@ -79,9 +74,7 @@ describe("GET /customers/:id", () => {
     const response = await request(app)
       .get("/customers/507f1f77bcf86cd799439011")
       .expect(200);
-    expect(response.body).to.include(
-      firstCustomer,
-    );
+    expect(response.body).to.include(firstCustomer);
   });
 
   it("Not Should find a id not exist", async () => {

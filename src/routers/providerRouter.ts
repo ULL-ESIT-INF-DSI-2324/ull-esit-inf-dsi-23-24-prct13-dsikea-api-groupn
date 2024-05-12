@@ -1,9 +1,16 @@
 import express, { Request, Response } from "express";
 import Provider from "../models/provider.js";
 
+/**
+ * Router for handling provider related requests.
+ */
 export const providerRouter = express.Router();
 providerRouter.use(express.json());
 
+/**
+ * GET all providers or retrieve provider by CIF.
+ * @returns {Response} - List of all providers or the requested provider.
+ */
 providerRouter.get("/providers", async (req: Request, res: Response) => {
   if (req.query.cif) {
     try {
@@ -30,11 +37,15 @@ providerRouter.get("/providers", async (req: Request, res: Response) => {
   }
 });
 
-// GET a specific provider by ID
+/**
+ * GET a specific provider by ID.
+ * @param {string} id - The ID of the provider.
+ * @returns {Response} - The provider with the specified ID.
+ */
 providerRouter.get("/providers/:id", async (req, res) => {
   try {
     const provider = await Provider.findOne({ _id: req.params.id });
-    
+
     if (provider) {
       return res.send(provider);
     } else {
@@ -45,7 +56,12 @@ providerRouter.get("/providers/:id", async (req, res) => {
   }
 });
 
-// POST a new provider
+/**
+ * POST a new provider.
+ * @param {Request} req - The request object containing provider data.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The newly created provider or an error message.
+ */
 providerRouter.post("/providers", async (req, res) => {
   try {
     const provider = new Provider({
@@ -65,6 +81,12 @@ providerRouter.post("/providers", async (req, res) => {
   }
 });
 
+/**
+ * Update provider information based on CIF.
+ * @param {Request} req - The request object containing updated provider information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated provider or an error message.
+ */
 providerRouter.patch("/providers", async (req, res) => {
   if (req.query.cif) {
     try {
@@ -96,6 +118,12 @@ providerRouter.patch("/providers", async (req, res) => {
   }
 });
 
+/**
+ * Update provider information by ID.
+ * @param {Request} req - The request object containing updated provider information.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated provider or an error message.
+ */
 providerRouter.patch("/providers/:id", async (req, res) => {
   try {
     const allowedUpdates = ["name", "contact", "postalCode", "cif"];
@@ -123,7 +151,12 @@ providerRouter.patch("/providers/:id", async (req, res) => {
   }
 });
 
-// DELETE a provider by CIF
+/**
+ * Delete a provider by CIF.
+ * @param {Request} req - The request object containing the CIF of the provider to be deleted.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message if the provider is deleted, otherwise error message.
+ */
 providerRouter.delete("/providers", async (req, res) => {
   if (req.query.cif) {
     try {
@@ -141,7 +174,12 @@ providerRouter.delete("/providers", async (req, res) => {
   }
 });
 
-// DELETE a provider by ID
+/**
+ * Delete a provider by ID.
+ * @param {Request} req - The request object containing the ID of the provider to be deleted.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message if the provider is deleted, otherwise error message.
+ */
 providerRouter.delete("/providers/:id", async (req: Request, res: Response) => {
   try {
     const provider = await Provider.findOneAndDelete({ _id: req.params.id });

@@ -1,6 +1,11 @@
 import { Document, model, Schema } from "mongoose";
 import validator from "validator";
 
+/**
+ * Interface for Provider document.
+ * @interface IProvider
+ * @extends {Document}
+ */
 export interface IProvider extends Document {
   name: string;
   contact: string;
@@ -8,6 +13,11 @@ export interface IProvider extends Document {
   cif: string;
 }
 
+/**
+ * Schema for Provider document.
+ * @const providerSchema
+ * @type {Schema}
+ */
 export const providerSchema: Schema = new Schema<IProvider>({
   name: { type: String, required: true },
   contact: {
@@ -36,11 +46,11 @@ export const providerSchema: Schema = new Schema<IProvider>({
     required: true,
     validate: {
       validator: (value: string) => {
-        const control = 'JABCDEFGHI';
+        const control = "JABCDEFGHI";
         const digit = value.slice(1, -1);
         const letter = value.charAt(0);
         const controlDigit = value.slice(-1);
-  
+
         let sum = 0;
         for (let i = 0; i < digit.length; i++) {
           const num = parseInt(digit.charAt(i), 10);
@@ -50,7 +60,7 @@ export const providerSchema: Schema = new Schema<IProvider>({
             sum += num;
           }
         }
-  
+
         const calculatedControlDigit = sum % 10 === 0 ? 0 : 10 - (sum % 10);
         return (
           /^[ABCDEFGHJNPQRSUVW]{1}/.test(letter) &&
@@ -64,4 +74,10 @@ export const providerSchema: Schema = new Schema<IProvider>({
   },
 });
 
+/**
+ * Mongoose model for Provider document.
+ * @export
+ * @default
+ * @type {model<IProvider>}
+ */
 export default model<IProvider>("Provider", providerSchema);

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "tsc-watch --onSuccess \"node dist/src/indexApp.js\"",
+    "start": "node dist/src/indexApp.js",
+    "casual": "tsc-watch --onSuccess \"env-cmd -f ./config/casual.env node dist/src/indexApp.js\"",
     "dev": "tsc-watch --onSuccess \"env-cmd -f ./config/dev.env node dist/src/indexApp.js\"",
     "test": "env-cmd -f ./config/test.env mocha --exit",
     "coverage": "c8 npm test && c8 report --reporter=lcov",

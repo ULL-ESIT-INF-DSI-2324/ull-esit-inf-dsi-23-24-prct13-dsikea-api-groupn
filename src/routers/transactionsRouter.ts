@@ -11,6 +11,9 @@ import {
   getPurchase,
 } from "../transactionFunctions.js";
 
+/**
+ * Router for handling transaction-related requests.
+ */
 export const transactionsRouter = express.Router();
 transactionsRouter.use(express.json());
 
@@ -96,21 +99,18 @@ transactionsRouter.get("/transactions", async (req: Request, res: Response) => {
  * @param {Response} res - The response object.
  * @returns {Response} - The requested transaction or appropriate error message.
  */
-transactionsRouter.get(
-  "/transactions/:id",
-  async (req: Request, res: Response) => {
-    try {
-      const customer = await Transaction.findOne({ id: req.params.id });
-      if (customer) {
-        return res.send(customer);
-      } else {
-        return res.status(404).send({ error: "Customer not found" });
-      }
-    } catch (error) {
-      return res.status(500).send(error);
+transactionsRouter.get("/transactions/:id", async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({ _id: req.params.id });
+    if (transaction) {
+      return res.status(201).send(transaction);
+    } else {
+      return res.status(404).send({ error: "Transaction not found" });
     }
-  },
-);
+  } catch (error) {
+    return res.status(500).send(error);
+  }
+});
 
 /**
  * Handles POST requests for creating new transactions, either sales or purchases.
@@ -204,6 +204,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
   const transaction = await Transaction.findOne({
     _id: req.params.id,
   });
+  let update = false;
   if (!transaction) {
     return res.status(404).send({ error: "Transaction not found" });
   }
@@ -224,6 +225,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
       { date: req.body.date },
       { new: true, runValidators: true },
     );
+    update = true;
   }
   if (transaction.type === "Sale") {
     if (req.body.customer) {
@@ -234,6 +236,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
           { customer: req.body.customer },
           { new: true, runValidators: true },
         );
+        update = true;
       } else {
         return res.status(404).send({ error: "Customer not found" });
       }
@@ -264,6 +267,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
           },
           { new: true, runValidators: true },
         );
+        update = true;
       }
     }
   } else if (transaction.type === "Purchase") {
@@ -275,6 +279,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
           { provider: req.body.provider },
           { new: true, runValidators: true },
         );
+        update = true;
       } else {
         return res.status(404).send({ error: "Provider not found" });
       }
@@ -283,7 +288,7 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
         .status(400)
         .send({ error: "You must provide the provider on a Purchase" });
     }
-    if (req.body.Furniture) {
+    if (req.body.furniture) {
       resetPurchase(transaction.furniture);
       const purchaseResult = await getPurchase(req.body.furniture);
       if ("error" in purchaseResult) {
@@ -297,10 +302,15 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
           },
           { new: true, runValidators: true },
         );
+        update = true;
       }
     }
   }
-  return res.status(201).send({ message: "Transaction updated" });
+  if (update) {
+    return res.status(201).send({ message: "Transaction updated" });
+  } else {
+    return res.status(400).send({ error: "No valid fields to update" });
+  }
 });
 
 /**
@@ -310,8 +320,6 @@ transactionsRouter.patch("/transactions/:id", async (req, res) => {
  * @param {Request} req - The request object containing the transaction ID.
  * @param {Response} res - The response object.
  * @returns {Response} - Success message or appropriate error message.
- *
- * @note CAMBIAR ESTE COMENTARIO POR FAVOR.
  */
 transactionsRouter.delete(
   "/transactions/:id",
@@ -339,6 +347,12 @@ transactionsRouter.delete(
   },
 );
 
+/**
+ * Handles DELETE requests for removing all transactions.
+ * @param {Request} req - The request object containing the query parameter 'all'.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message or appropriate error message.
+ */
 transactionsRouter.delete("/transactions", async (req, res) => {
   try {
     if (req.query.all === "1") {

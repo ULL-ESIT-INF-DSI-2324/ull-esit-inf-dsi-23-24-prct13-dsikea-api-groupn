@@ -2,15 +2,18 @@ import express, { Request, Response } from "express";
 import Furniture from "../models/furniture.js";
 import { furnitureSchema } from "../models/furniture.js";
 
+/**
+ * Router for handling furniture related requests.
+ */
 export const furnitureRouter = express.Router();
 furnitureRouter.use(express.json());
 
 /**
  * Checks if the keys in the request query match the keys in the furniture schema.
  * @param {Request} req - The HTTP request.
- * @returns True if all keys in the query are in the furniture schema, false otherwise.
+ * @returns {boolean} - True if all keys in the query are in the furniture schema, false otherwise.
  */
-function checkFurnitureQuery(req: Request) {
+function checkFurnitureQuery(req: Request): boolean {
   const keys = Object.keys(req.query);
   const keysFurnitures = Object.keys(furnitureSchema.obj);
   for (const key of keys) {
@@ -22,10 +25,9 @@ function checkFurnitureQuery(req: Request) {
 }
 
 /**
- * GET all furnitures. Or search furnitures by name, description, material, price...
- * @returns {Response} - List of all furnitures.
+ * GET all furnitures or search furnitures by name, description, material, price, etc.
+ * @returns {Response} - List of all furnitures or search results.
  */
-
 furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
   if (req.query) {
     if (checkFurnitureQuery(req)) {
@@ -50,6 +52,7 @@ furnitureRouter.get("/furnitures", (req: Request, res: Response) => {
     res.status(400).json({ error: "No search parameters specified" });
   }
 });
+
 /**
  * GET a furniture by ID.
  * @param {string} id - The ID of the furniture.
@@ -72,9 +75,9 @@ furnitureRouter.get("/furnitures/:id", (req: Request, res: Response) => {
 
 /**
  * POST a new furniture.
- * @param {Request} req - The request object containing customer data.
+ * @param {Request} req - The request object containing furniture data.
  * @param {Response} res - The response object.
- * @returns {Response} - The newly created customer.
+ * @returns {Response} - The newly created furniture.
  */
 furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
   if (req.body) {
@@ -88,8 +91,9 @@ furnitureRouter.post("/furnitures", (req: Request, res: Response) => {
       color: req.body.color,
     };
     const newFurniture = new Furniture(furniture);
-    if (newFurniture.quantity === 0){
-      newFurniture.save()
+    if (newFurniture.quantity === 0) {
+      newFurniture
+        .save()
         .then(() => {
           res.json({ message: "Furniture added successfully" });
         })
@@ -131,7 +135,10 @@ furnitureRouter.patch("/furnitures", (req: Request, res: Response) => {
           } else if (foundFurniture.length === 1) {
             Furniture.updateOne(req.query, req.body)
               .then(() => {
-                res.json({ message: "Furniture updated successfully" , furniture:  req.body});
+                res.json({
+                  message: "Furniture updated successfully",
+                  furniture: req.body,
+                });
               })
               .catch(() => {
                 res
@@ -204,7 +211,7 @@ furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
   Furniture.findByIdAndDelete(id)
     .then((furniture) => {
       if (furniture) {
-        res.json({message: "Furniture deleted successfully" });
+        res.json({ message: "Furniture deleted successfully" });
       } else {
         res.status(404).json({ error: "Furniture not found" });
       }
@@ -214,6 +221,12 @@ furnitureRouter.delete("/furnitures/:id", (req: Request, res: Response) => {
     });
 });
 
+/**
+ * Delete furniture based on query parameters.
+ * @param {Request} req - The request object containing query parameters.
+ * @param {Response} res - The response object.
+ * @returns {Response} - Success message or error message.
+ */
 furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
   if (checkFurnitureQuery(req)) {
     Furniture.find(req.query)
@@ -226,9 +239,7 @@ furnitureRouter.delete("/furnitures", (req: Request, res: Response) => {
               res.json({ message: "Furniture deleted successfully" });
             })
             .catch(() => {
-              res
-                .status(500)
-                .json({ error: "Error when deleting furniture" });
+              res.status(500).json({ error: "Error when deleting furniture" });
             });
         } else {
           res.status(500).json({

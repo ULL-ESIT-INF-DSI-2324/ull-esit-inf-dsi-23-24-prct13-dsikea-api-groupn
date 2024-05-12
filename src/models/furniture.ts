@@ -1,12 +1,24 @@
 import { Document, model, Schema } from "mongoose";
 // import validator from 'validator';
 
+/**
+ * Type for the dimensions of a furniture item.
+ * @typedef Dimension
+ * @property {number} length - The length of the furniture item.
+ * @property {number} width - The width of the furniture item.
+ * @property {number} height - The height of the furniture item.
+ */
 type Dimension = {
   length: number;
   width: number;
   height: number;
 };
 
+/**
+ * Interface for Furniture document.
+ * @interface IFurniture
+ * @extends {Document}
+ */
 export interface IFurniture extends Document {
   name: string;
   description: string;
@@ -17,6 +29,11 @@ export interface IFurniture extends Document {
   color: string;
 }
 
+/**
+ * Schema for Furniture document.
+ * @const furnitureSchema
+ * @type {Schema}
+ */
 export const furnitureSchema: Schema = new Schema<IFurniture>({
   name: {
     type: String,
@@ -60,4 +77,10 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
   },
 });
 
+/**
+ * Mongoose model for Furniture document.
+ * @export
+ * @default
+ * @type {model<IFurniture>}
+ */
 export default model<IFurniture>("Furniture", furnitureSchema);

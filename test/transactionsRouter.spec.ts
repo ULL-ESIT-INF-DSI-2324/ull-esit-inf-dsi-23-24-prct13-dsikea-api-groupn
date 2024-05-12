@@ -180,6 +180,17 @@ describe("GET /transactions", () => {
       thirdTransaction,
     ]);
   });
+
+  it("Should get a transaction by its ID", async () => {
+    await request(app).get(`/transactions/${firstTransaction._id}`).expect(201);
+  });
+
+  it("Should return 404 if the transaction ID does not exist", async () => {
+    const response = await request(app)
+      .get(`/transactions/663d72f1e8c597ba49ab8aa0`)
+      .expect(404);
+    expect(response.body).to.have.property("error", "Transaction not found");
+  });
 });
 
 //###POST###//
@@ -561,6 +572,27 @@ describe("PATCH /transactions/:id", () => {
     );
   });
 
+  it("Should update a transaction's date", async () => {
+    const updatedDate = "2022-01-05T00:00:00.000Z";
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ date: updatedDate })
+      .expect(201);
+    expect(response.body).to.have.property("message", "Transaction updated");
+  });
+
+  it("Triying to update a transaction's price", async () => {
+    const updatedPrice = 1000;
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ price: updatedPrice })
+      .expect(400);
+    expect(response.body).to.have.property(
+      "error",
+      "You cannot change the price of the transaction, only if you change the furniture",
+    );
+  });
+
   it("Should update a Purchase transaction's furniture", async () => {
     const updatedFurniture = [
       {
@@ -601,6 +633,51 @@ describe("PATCH /transactions/:id", () => {
       .patch(`/transactions/${thirdTransaction._id}`)
       .send({ furniture: updatedFurniture })
       .expect(201);
+  });
+
+  it("Trying to update a transaction's, whit bad furniture", async () => {
+    const updatedFurniture = [
+      {
+        quantity: 2,
+        name: "Unknown Furniture",
+        material: firstFurniture.material,
+        color: firstFurniture.color,
+      },
+    ];
+    await request(app)
+      .patch(`/transactions/${thirdTransaction._id}`)
+      .send({ furniture: updatedFurniture })
+      .expect(400);
+  });
+
+  it("Trying to update a transaction's, whit bad material", async () => {
+    const updatedFurniture = [
+      {
+        quantity: 2,
+        name: firstFurniture.name,
+        material: "Unknown Material",
+        color: firstFurniture.color,
+      },
+    ];
+    await request(app)
+      .patch(`/transactions/${thirdTransaction._id}`)
+      .send({ furniture: updatedFurniture })
+      .expect(400);
+  });
+
+  it("Trying to update a transaction's, whit bad color", async () => {
+    const updatedFurniture = [
+      {
+        quantity: 2,
+        name: firstFurniture.name,
+        material: firstFurniture.material,
+        color: "Unknown Color",
+      },
+    ];
+    await request(app)
+      .patch(`/transactions/${thirdTransaction._id}`)
+      .send({ furniture: updatedFurniture })
+      .expect(400);
   });
 
   it("Should update a transaction's date", async () => {

@@ -47,10 +47,7 @@ describe("GET /providers", () => {
         postalCode: provider.postalCode,
         cif: provider.cif,
       })),
-    ).to.deep.include.members([
-      firstProvider,
-      secondProvider,
-    ]);
+    ).to.deep.include.members([firstProvider, secondProvider]);
   });
   it("Not Should find a user by username beacuse not exist this DNI un the query", async () => {
     const response = await request(app)

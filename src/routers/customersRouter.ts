@@ -1,14 +1,19 @@
 import express, { Request, Response } from "express";
 import Customer from "../models/customer.js";
-// import { providerSchema } from "../models/provider.js";
 
+/**
+ * Router for handling customer related requests.
+ */
 export const customersRouter = express.Router();
 customersRouter.use(express.json());
 
 /**
- * GET a customer by DNI.
- * @param {string} dni - The DNI of the customer.
- * @returns {Response} - The customer with the specified DNI.
+ * GET /customers
+ * If a DNI is provided, it returns the customer with that DNI.
+ * If no DNI is provided, it returns all customers.
+ * @param {Request} req - The request object containing query parameters.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The requested customer(s) or appropriate error message.
  */
 customersRouter.get("/customers", async (req: Request, res: Response) => {
   if (req.query.dni) {
@@ -37,17 +42,18 @@ customersRouter.get("/customers", async (req: Request, res: Response) => {
 });
 
 /**
- * GET a customer by ID.
- * @param {string} id - The ID of the customer.
- * @returns {Response} - The customer with the specified ID.
+ * GET /customers/:id
+ * Returns the customer with the provided ID.
+ * @param {Request} req - The request object containing the customer ID.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The requested customer or appropriate error message.
  */
 customersRouter.get("/customers/:id", async (req, res) => {
   try {
     const customer = await Customer.findOne({ _id: req.params.id });
-  
+
     if (!customer) {
       return res.status(404).send({ error: "Customer not found" });
-     
     } else {
       return res.send(customer);
     }
@@ -57,10 +63,12 @@ customersRouter.get("/customers/:id", async (req, res) => {
 });
 
 /**
- * POST a new customer.
+ * POST /customers
+ * Creates a new customer with the provided data.
+ * Returns an error if a customer with the same DNI already exists.
  * @param {Request} req - The request object containing customer data.
  * @param {Response} res - The response object.
- * @returns {Response} - The newly created customer.
+ * @returns {Response} - The created customer or appropriate error message.
  */
 customersRouter.post("/customers", async (req, res) => {
   try {
@@ -83,14 +91,16 @@ customersRouter.post("/customers", async (req, res) => {
 });
 
 /**
- * Update customer information by ID.
- * @param {Request} req - The request object containing updated customer information.
+ * PATCH /customers/:id
+ * Updates the customer with the provided ID.
+ * Only allows updates to certain fields.
+ * @param {Request} req - The request object containing customer data.
  * @param {Response} res - The response object.
- * @returns {Response} - The updated customer.
+ * @returns {Response} - The updated customer or appropriate error message.
  */
 customersRouter.patch("/customers/:id", async (req, res) => {
   try {
-    const allowedUpdates = ["name", "contact", "postalCode", "dni", "email"]
+    const allowedUpdates = ["name", "contact", "postalCode", "dni", "email"];
     const actualUpdates = Object.keys(req.body);
     const isValidUpdate = actualUpdates.every((update) =>
       allowedUpdates.includes(update),
@@ -115,6 +125,14 @@ customersRouter.patch("/customers/:id", async (req, res) => {
   }
 });
 
+/**
+ * PATCH /customers
+ * Updates the customer with the provided DNI.
+ * Only allows updates to certain fields.
+ * @param {Request} req - The request object containing customer data.
+ * @param {Response} res - The response object.
+ * @returns {Response} - The updated customer or appropriate error message.
+ */
 customersRouter.patch("/customers", async (req, res) => {
   if (req.query.dni) {
     try {
@@ -147,10 +165,11 @@ customersRouter.patch("/customers", async (req, res) => {
 });
 
 /**
- * Delete a customer by DNI.
- * @param {Request} req - The request object containing the DNI of the customer to be deleted.
+ * DELETE /customers
+ * Deletes the customer with the provided DNI.
+ * @param {Request} req - The request object containing customer data.
  * @param {Response} res - The response object.
- * @returns {Response} - Success message if the customer is deleted, otherwise error message.
+ * @returns {Response} - Success message or appropriate error message.
  */
 customersRouter.delete("/customers", async (req, res) => {
   if (req.query.dni) {
@@ -170,10 +189,11 @@ customersRouter.delete("/customers", async (req, res) => {
 });
 
 /**
- * Delete a customer by ID.
- * @param {Request} req - The request object containing the ID of the customer to be deleted.
+ * DELETE /customers/:id
+ * Deletes the customer with the provided ID.
+ * @param {Request} req - The request object containing the customer ID.
  * @param {Response} res - The response object.
- * @returns {Response} - Success message if the customer is deleted, otherwise error message.
+ * @returns {Response} - Success message or appropriate error message.
  */
 customersRouter.delete(
   "/customers/:id",

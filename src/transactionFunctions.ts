@@ -11,6 +11,9 @@ export interface bodyTransFurniture {
   color: string;
 }
 
+/**
+ * Interface representing the structure of furniture items.
+ */
 export interface FurnitureI {
   name: string;
   description: string;
@@ -21,6 +24,9 @@ export interface FurnitureI {
   color: string;
 }
 
+/**
+ * Type representing the structure of a transaction.
+ */
 export type TransactionType = {
   type: string;
   provider?: string;
@@ -60,11 +66,6 @@ export async function resetSale(transaction: FurnitureTuple[]) {
   }
 }
 
-/**
- * Calculates the total price and gathers furniture items for a sale transaction.
- * @param furniture - The array of furniture items in the transaction.
- * @returns The furniture items and the total price of the transaction.
- */
 /**
  * Calculates the total price and gathers furniture items for a sale transaction.
  * @param furniture - The array of furniture items in the transaction.
