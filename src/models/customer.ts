@@ -14,6 +14,7 @@ function calcularLetraDNI(numeroDNI: number) {
   const resto = numeroDNI % 23;
   return letras.charAt(resto);
 }
+
 export const customerSchema: Schema = new Schema<ICustomer>({
   name: { type: String, required: true },
   contact: {
@@ -42,6 +43,7 @@ export const customerSchema: Schema = new Schema<ICustomer>({
   },
   dni: {
     type: String,
+    unique: true,
     required: true,
     validate: {
       validator: (value: string) => {

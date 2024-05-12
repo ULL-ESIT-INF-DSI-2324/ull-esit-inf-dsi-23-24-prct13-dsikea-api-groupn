@@ -32,6 +32,7 @@ export const providerSchema: Schema = new Schema<IProvider>({
   },
   cif: {
     type: String,
+    unique: true,
     required: true,
     validate: {
       validator: (value: string) => {

@@ -41,7 +41,7 @@ beforeEach(async () => {
 //###############CUSTOMERS##################//
 
 //###GET###//
-describe("GET /customer", () => {
+describe("GET /customers", () => {
   it("Should get a user by username with the dni in the query", async () => {
     const response = await request(app)
       .get("/customers?dni=12345678Z")

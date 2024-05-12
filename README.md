@@ -10,7 +10,7 @@
 
 ![Imagen API-REST](images/api-rest-image.png)
 
-## Manuel David Gomez Alonso
+## Manuel David Gómez Alonso
 > [alu0101347301@ull.edu.es](mailto:alu0101347301@ull.edu.es)
 ## Daniel Bensa Expósito Paz
 > [alu0101481876@ull.edu.es](mailto:alu0101481876@ull.edu.es)
@@ -34,7 +34,7 @@
     - [MongoDB Atlas](#mongodb-atlas)
     - [Render](#render)
 6. [Peticiones](#peticiones)
-7. [Conclusión del proyecto](#conclusión-del-proyecto)
+7. [Conclusiones del proyecto](#conclusiones-del-proyecto)
 8. [Referencias](#referencias)
 
 ## Resumen Proyecto
@@ -49,6 +49,8 @@ En cuanto a los requisitos específicos del API, se detallan las rutas y operaci
 - **Transacciones (/transactions)**: Debe ser posible crear, leer, actualizar y borrar transacciones con clientes y/o proveedores. Una transacción incluye información del **cliente/proveedor** y de los **muebles** involucrados, además de otros datos como fecha, hora e importe. Se deben manejar situaciones como la existencia previa de clientes/proveedores o muebles, la **actualización de stock** en caso de compra a proveedores, entre otros aspectos complejos. Se requieren **seis manejadores** diferentes para esta ruta.
 
 También se debe de comprobar la funcionalidad del API elaborando las necesarias **pruebas unitarias**, y una vez concluida la correcta funcionalidad del API, desplegar la misma haciendo uso de **MongoDB Atlas** como base de datos y **Render**.
+
+> **[Volver al índice](#índice)**
 
 ## Modelado de objetos con Mongoose
 
@@ -89,6 +91,38 @@ export const customerSchema: Schema = new Schema<ICustomer>({
 });
 ```
 
+Por último comentar la **validación** del campo *dni* que identifica al **cliente** y por lo tanto debe ser única, para comprobar el dni se usa la fórmula definida para comprobar que la última letra coincida con los dígitos previos.
+
+```ts
+export const customerSchema: Schema = new Schema<ICustomer>({
+  dni: {
+    type: String,
+    unique: true,
+    required: true,
+    validate: {
+      validator: (value: string) => {
+        const numeroDNI = parseInt(value.slice(0, -1), 10);
+        const letraDNI = value.slice(-1);
+        return letraDNI === calcularLetraDNI(numeroDNI);
+      },
+      message: "Invalid DNI",
+    },
+  },
+});
+```
+
+Donde *calcularLetraDNI(numeroDNI)* es una llamada a la función auxiliar que calcula la **última letra** en base a los dígitos anteriores.
+
+```ts
+function calcularLetraDNI(numeroDNI: number) {
+  const letras = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  const resto = numeroDNI % 23;
+  return letras.charAt(resto);
+}
+```
+
+> **[Volver al índice](#índice)**
+
 ### Modelo Provider
 
 El modelo *Provider* es una representación de un **proveedor** en la base de datos. Es muy similar a el modelo *Customer* pero cambiando el atributo *dni*, que se resume en ocho dígitos y una letra final mayúscula, por el atributo *cif*, que empieza por una letra mayúscula seguida de 8 digitos.
@@ -106,20 +140,38 @@ export interface IProvider extends Document {
 
 El esquema *providerSchema* define cómo se guardan los datos en la base de datos de **MongoDB**. Define los mismos campos que la interfaz *IProvider*, pero también especifica el **tipo de datos** de cada campo, si el campo es **requerido**, y cualquier **validación** que deba realizarse en el campo.
 
-La **validación** se realiza utilizando la biblioteca **validator**. Por ejemplo, el campo *cif* del que hablabamos anteriormente se debe verificar utiliza *validator.isAlphanumeric(value)* para verificar si el valor es una cadena de letras y números y además se ha de verificar que sea del tamaño necesario, es decir nueve caracteres, y que el primero de ellos sea una letra y no un dígito. En el caso del *dni*, atributo perteneciente a **Customer**, se comprueba que la posición de la letra sea la última.
+La **validación** es este caso del campo *cif* del que hablabamos anteriormente se debe verificar de manera especial al igual que el campo *dni* de un *customerSchema*. Se debe de tener en cuenta que el primer dígito del *cif* no se elige de manera aleatoria y que depende de los digitos posteriores, para ello usamos una constante de **letras de control** permitidas y comprobamos que todo coincida como debería.
 
 ```ts
 export const providerSchema: Schema = new Schema<IProvider>({
   // Otros atributos
   cif: {
     type: String,
+    unique: true,
     required: true,
     validate: {
       validator: (value: string) => {
+        const control = 'JABCDEFGHI';
+        const digit = value.slice(1, -1);
+        const letter = value.charAt(0);
+        const controlDigit = value.slice(-1);
+  
+        let sum = 0;
+        for (let i = 0; i < digit.length; i++) {
+          const num = parseInt(digit.charAt(i), 10);
+          if (i % 2 === 0) {
+            sum += [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][num];
+          } else {
+            sum += num;
+          }
+        }
+  
+        const calculatedControlDigit = sum % 10 === 0 ? 0 : 10 - (sum % 10);
         return (
-          validator.isAlphanumeric(value) &&
-          value.length === 9 &&
-          value[0] === value[0].toUpperCase()
+          /^[ABCDEFGHJNPQRSUVW]{1}/.test(letter) &&
+          digit.length === 7 &&
+          (controlDigit === calculatedControlDigit.toString() ||
+            controlDigit === control.charAt(calculatedControlDigit))
         );
       },
       message: "Invalid CIF",
@@ -128,6 +180,8 @@ export const providerSchema: Schema = new Schema<IProvider>({
   // Otros atributos
 });
 ```
+
+> **[Volver al índice](#índice)**
 
 ### Modelo Furniture
 
@@ -181,6 +235,8 @@ export const furnitureSchema: Schema = new Schema<IFurniture>({
   // Otros atributos
 });
 ```
+
+> **[Volver al índice](#índice)**
 
 ### Modelo Transaction
 
@@ -253,6 +309,68 @@ export const transactionSchema = new Schema<ITransaction>({
 
 > **[Volver al índice](#índice)**
 
+## Rutas
+
+Las **rutas** en la **API** definen los **puntos finales** a los que los clientes pueden enviar **peticiones** para interactuar con la aplicación. Cada **ruta** está asociada con una función específica de la **API**. En la **API**, se tienen **rutas** para cuatro recursos diferentes: *Customer*, *Provider*, *Furniture* y *Transaction*. Cada uno de estos recursos tienen rutas para las operaciones **CRUD (Crear, Leer, Actualizar, Eliminar)**.
+
+### /customers
+
+
+
+> **[Volver al índice](#índice)**
+
+### /providers
+
+
+
+> **[Volver al índice](#índice)**
+
+### /furnitures
+
+
+
+> **[Volver al índice](#índice)**
+
+### /transactions
+
+
+
+> **[Volver al índice](#índice)**
+
+## Test sobre el API
+
+
+
+> **[Volver al índice](#índice)**
+
+## Despliegue API
+
+
+
+### MongoDB Atlas
+
+
+
+> **[Volver al índice](#índice)**
+
+### Render
+
+
+
+> **[Volver al índice](#índice)**
+
+## Peticiones
+
+
+
+> **[Volver al índice](#índice)**
+
+## Conclusiones del proyecto
+
+
+
+> **[Volver al índice](#índice)**
+
 ## Referencias
 
 [Node.js](https://nodejs.org/docs/latest/api/fs.html)
@@ -262,6 +380,10 @@ export const transactionSchema = new Schema<ITransaction>({
 [Mongoose](https://mongoosejs.com/docs/guide.html)
 
 [MongoDB](https://www.mongodb.com/docs/manual/)
+
+[Validator](https://www.npmjs.com/package/validator)
+
+[SuperTest](https://www.npmjs.com/package/supertest)
 
 [MongoDB Atlas](https://www.mongodb.com/docs/atlas/)
 
