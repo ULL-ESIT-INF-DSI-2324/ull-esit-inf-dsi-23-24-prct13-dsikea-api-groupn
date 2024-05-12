@@ -427,211 +427,6 @@ Eliminar uno o varios muebles basándose en los parámetros de búsqueda proporc
 
 Proporciona funcionalidades para administrar transacciones en el sistema.
 
-#### GET /transactions
-
-Obtener todas las transacciones o para buscar transacciones basadas en varios parámetros de consulta. Si no se proporcionan parámetros de consulta, se devuelven todas las transacciones. Si se proporciona un parámetro de consulta 'dni', se recuperan las transacciones asociadas al número de identificación del cliente. Si se proporciona un parámetro de consulta 'cif', se recuperan las transacciones asociadas al número de identificación fiscal del proveedor. Si se proporcionan los parámetros de consulta 'Idate' y 'Fdate', se recuperan las transacciones dentro de un rango de fechas. Se manejan los casos en los que no se encuentran transacciones o hay errores de servidor.
-
-#### GET /transactions/:id
-
-Obtener una transacción específica por su ID. El ID de la transacción se proporciona como parte de la URL. Se busca la transacción en la base de datos utilizando el ID proporcionado y se devuelve si se encuentra. Se manejan los casos en los que no se encuentra la transacción o hay errores de servidor.
-
-#### POST /transactions
-
-Crear nuevas transacciones, ya sea ventas o compras. Los detalles de la transacción se esperan en el cuerpo de la solicitud en formato JSON. Se manejan los casos en los que no se encuentra el cliente o el proveedor asociado, así como los casos en los que hay errores en la creación de la transacción.
-
-#### PATCH /transactions/:id
-
-Actualizar información sobre una transacción específica identificada por su ID. Se manejan los casos en los que no se encuentra la transacción, no se pueden realizar ciertas actualizaciones o hay errores de servidor.
-
-#### DELETE /transactions/:id
-
-Eliminar una transacción específica identificada por su ID. El ID de la transacción se proporciona como parte de la URL. Se manejan los casos en los que no se encuentra la transacción o hay errores de servidor.
-
-#### DELETE /transactions
-
-Eliminar todas las transacciones o para eliminar transacciones en función de ciertos parámetros de consulta. Se manejan los casos en los que no se proporcionan los parámetros de consulta necesarios o hay errores de servidor.
-
-> **[Volver al índice](#índice)**
-
-## Test sobre el API
-
-### Customers
-
-Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de cliente
-
-#### GET /customers:
-
-Prueba la recuperación de un cliente por su DNI.
-
-Prueba la recuperación de todos los clientes.
-
-Prueba la respuesta cuando no se encuentra un cliente con un DNI específico.
-
-#### GET /customers/:id:
-
-Prueba la recuperación de un cliente por su ID.
-
-Prueba la respuesta cuando no se encuentra un cliente con un ID específico.
-
-#### POST /customers:
-
-Prueba la creación exitosa de un nuevo cliente.
-
-Prueba la respuesta cuando se intenta crear un cliente con un DNI que ya existe.
-
-Prueba la respuesta cuando se proporciona un número de teléfono no válido.
-
-#### PATCH /customers:
-
-Prueba la modificación exitosa de un cliente por su DNI.
-
-Prueba la respuesta cuando se intenta modificar atributos no permitidos.
-
-Prueba la respuesta cuando se intenta modificar un cliente que no existe.
-
-#### PATCH /customers/:id:
-
-Prueba la modificación exitosa de un cliente por su ID.
-
-Prueba la respuesta cuando se intenta modificar atributos no permitidos.
-
-Prueba la respuesta cuando se intenta modificar un cliente que no existe.
-
-#### DELETE /customers/:id:
-
-Prueba la eliminación exitosa de un cliente por su ID.
-
-Prueba la respuesta cuando se intenta eliminar un cliente que no existe.
-
-#### DELETE /customers:
-
-Prueba la eliminación exitosa de un cliente por su DNI.
-
-Prueba la respuesta cuando se intenta eliminar un cliente que no existe.
-
-Prueba la respuesta cuando no se proporciona un DNI en el cuerpo de la solicitud.
-
-### Providers
-
-Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de proveedores
-
-#### GET /providers:
-
-Prueba la recuperación de un proveedor por su CIF.
-
-Prueba la recuperación de todos los proveedores.
-
-Prueba la respuesta cuando no se encuentra un proveedor con un CIF específico.
-
-#### GET /providers/:id:
-
-Prueba la recuperación de un proveedor por su ID.
-
-Prueba la respuesta cuando no se encuentra un proveedor con un ID específico.
-
-#### POST /providers:
-
-Prueba la creación exitosa de un nuevo proveedor.
-
-Prueba la respuesta cuando se intenta crear un proveedor con un CIF que ya existe.
-
-Prueba la respuesta cuando se proporciona un número de teléfono no válido.
-
-#### PATCH /providers:
-
-Prueba la modificación exitosa de un proveedor por su CIF.
-
-Prueba la respuesta cuando se intenta modificar atributos no permitidos.
-
-Prueba la respuesta cuando se intenta modificar un proveedor que no existe.
-
-#### PATCH /providers/:id:
-
-Prueba la modificación exitosa de un proveedor por su ID.
-
-Prueba la respuesta cuando se intenta modificar atributos no permitidos.
-
-Prueba la respuesta cuando se intenta modificar un proveedor que no existe.
-
-#### DELETE /providers/:id:
-
-Prueba la eliminación exitosa de un proveedor por su ID.
-
-Prueba la respuesta cuando se intenta eliminar un proveedor que no existe.
-
-#### DELETE /providers:
-
-Prueba la eliminación exitosa de un proveedor por su CIF.
-
-Prueba la respuesta cuando se intenta eliminar un proveedor que no existe.
-
-Prueba la respuesta cuando no se proporciona un CIF en el cuerpo de la
-solicitud.
-
-### Furnitures
-
-Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de muebles
-
-#### GET /furnitures:
-
-Prueba la recuperación de todos los muebles.
-
-Prueba la recuperación de muebles por nombre.
-
-Prueba la respuesta cuando no se encuentra un mueble con un nombre específico.
-
-Prueba la recuperación de muebles por material.
-
-#### GET /furnitures/:id:
-
-Prueba la recuperación de un mueble por su ID.
-
-Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
-
-#### POST /furnitures:
-
-Prueba la creación exitosa de un nuevo mueble.
-
-Prueba la respuesta cuando se intenta crear un mueble con una cantidad distinta de 0.
-
-Prueba la respuesta cuando faltan atributos obligatorios.
-
-Prueba la respuesta cuando se intenta agregar una cantidad al crear un mueble.
-
-#### PATCH /furnitures/:id:
-
-Prueba la modificación exitosa de un mueble por su ID.
-
-Prueba la respuesta cuando se intenta modificar un mueble que no existe.
-
-Prueba la respuesta cuando se intenta agregar una cantidad al modificar un mueble.
-
-#### PATCH /furnitures:
-
-Prueba la modificación exitosa de un mueble por nombre y material.
-
-Prueba la respuesta cuando se intenta modificar un mueble que no existe.
-
-Prueba la respuesta cuando se intenta agregar una cantidad al modificar un mueble.
-
-Prueba la respuesta cuando se proporcionan parámetros de búsqueda no válidos.
-
-#### DELETE /furnitures:
-
-Prueba la eliminación exitosa de un mueble por nombre.
-
-Prueba la respuesta cuando se encuentran múltiples muebles coincidentes.
-
-Prueba la respuesta cuando se proporcionan atributos de búsqueda no válidos.
-
-#### DELETE /furnitures/:id:
-
-Prueba la eliminación exitosa de un mueble por su ID.
-
-Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
-
-Prueba la respuesta cuando el formato del ID del mueble no es válido.
-
 ### /transactions
 
 Nos adentramos en la más complicada de las rutas debido a la cantidad de comprobaciones que hay que hacer y a la lógica que hay detrás de esta, esta ruta controlará el stock y como vimos en los esquemás tendrá que tener referencias a proveedores, a clientes y a los muebles implicados, la petición `get` es bastante sencilla, vamos a destacar la primera de ellas, contendrá casos como los siguientes:
@@ -851,6 +646,187 @@ transactionsRouter.delete(
   },
 );
 ```
+
+> **[Volver al índice](#índice)**
+
+## Test sobre el API
+
+### Customers
+
+Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de cliente
+
+#### GET /customers:
+
+Prueba la recuperación de un cliente por su DNI.
+
+Prueba la recuperación de todos los clientes.
+
+Prueba la respuesta cuando no se encuentra un cliente con un DNI específico.
+
+#### GET /customers/:id:
+
+Prueba la recuperación de un cliente por su ID.
+
+Prueba la respuesta cuando no se encuentra un cliente con un ID específico.
+
+#### POST /customers:
+
+Prueba la creación exitosa de un nuevo cliente.
+
+Prueba la respuesta cuando se intenta crear un cliente con un DNI que ya existe.
+
+Prueba la respuesta cuando se proporciona un número de teléfono no válido.
+
+#### PATCH /customers:
+
+Prueba la modificación exitosa de un cliente por su DNI.
+
+Prueba la respuesta cuando se intenta modificar atributos no permitidos.
+
+Prueba la respuesta cuando se intenta modificar un cliente que no existe.
+
+#### PATCH /customers/:id:
+
+Prueba la modificación exitosa de un cliente por su ID.
+
+Prueba la respuesta cuando se intenta modificar atributos no permitidos.
+
+Prueba la respuesta cuando se intenta modificar un cliente que no existe.
+
+#### DELETE /customers/:id:
+
+Prueba la eliminación exitosa de un cliente por su ID.
+
+Prueba la respuesta cuando se intenta eliminar un cliente que no existe.
+
+#### DELETE /customers:
+
+Prueba la eliminación exitosa de un cliente por su DNI.
+
+Prueba la respuesta cuando se intenta eliminar un cliente que no existe.
+
+Prueba la respuesta cuando no se proporciona un DNI en el cuerpo de la solicitud.
+
+### Providers
+
+Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de proveedores
+
+#### GET /providers:
+
+Prueba la recuperación de un proveedor por su CIF.
+
+Prueba la recuperación de todos los proveedores.
+
+Prueba la respuesta cuando no se encuentra un proveedor con un CIF específico.
+
+#### GET /providers/:id:
+
+Prueba la recuperación de un proveedor por su ID.
+
+Prueba la respuesta cuando no se encuentra un proveedor con un ID específico.
+
+#### POST /providers:
+
+Prueba la creación exitosa de un nuevo proveedor.
+
+Prueba la respuesta cuando se intenta crear un proveedor con un CIF que ya existe.
+
+Prueba la respuesta cuando se proporciona un número de teléfono no válido.
+
+#### PATCH /providers:
+
+Prueba la modificación exitosa de un proveedor por su CIF.
+
+Prueba la respuesta cuando se intenta modificar atributos no permitidos.
+
+Prueba la respuesta cuando se intenta modificar un proveedor que no existe.
+
+#### PATCH /providers/:id:
+
+Prueba la modificación exitosa de un proveedor por su ID.
+
+Prueba la respuesta cuando se intenta modificar atributos no permitidos.
+
+Prueba la respuesta cuando se intenta modificar un proveedor que no existe.
+
+#### DELETE /providers/:id:
+
+Prueba la eliminación exitosa de un proveedor por su ID.
+
+Prueba la respuesta cuando se intenta eliminar un proveedor que no existe.
+
+#### DELETE /providers:
+
+Prueba la eliminación exitosa de un proveedor por su CIF.
+
+Prueba la respuesta cuando se intenta eliminar un proveedor que no existe.
+
+Prueba la respuesta cuando no se proporciona un CIF en el cuerpo de la
+solicitud.
+
+### Furnitures
+
+Estos tests prueban diferentes aspectos de la API relacionados con las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para la entidad de muebles
+
+#### GET /furnitures:
+
+Prueba la recuperación de todos los muebles.
+
+Prueba la recuperación de muebles por nombre.
+
+Prueba la respuesta cuando no se encuentra un mueble con un nombre específico.
+
+Prueba la recuperación de muebles por material.
+
+#### GET /furnitures/:id:
+
+Prueba la recuperación de un mueble por su ID.
+
+Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
+
+#### POST /furnitures:
+
+Prueba la creación exitosa de un nuevo mueble.
+
+Prueba la respuesta cuando se intenta crear un mueble con una cantidad distinta de 0.
+
+Prueba la respuesta cuando faltan atributos obligatorios.
+
+Prueba la respuesta cuando se intenta agregar una cantidad al crear un mueble.
+
+#### PATCH /furnitures/:id:
+
+Prueba la modificación exitosa de un mueble por su ID.
+
+Prueba la respuesta cuando se intenta modificar un mueble que no existe.
+
+Prueba la respuesta cuando se intenta agregar una cantidad al modificar un mueble.
+
+#### PATCH /furnitures:
+
+Prueba la modificación exitosa de un mueble por nombre y material.
+
+Prueba la respuesta cuando se intenta modificar un mueble que no existe.
+
+Prueba la respuesta cuando se intenta agregar una cantidad al modificar un mueble.
+
+Prueba la respuesta cuando se proporcionan parámetros de búsqueda no válidos.
+
+#### DELETE /furnitures:
+
+Prueba la eliminación exitosa de un mueble por nombre.
+
+Prueba la respuesta cuando se encuentran múltiples muebles coincidentes.
+
+Prueba la respuesta cuando se proporcionan atributos de búsqueda no válidos.
+
+#### DELETE /furnitures/:id:
+
+Prueba la eliminación exitosa de un mueble por su ID.
+
+Prueba la respuesta cuando no se encuentra un mueble con un ID específico.
+
+Prueba la respuesta cuando el formato del ID del mueble no es válido.
 
 > **[Volver al índice](#índice)**
 
