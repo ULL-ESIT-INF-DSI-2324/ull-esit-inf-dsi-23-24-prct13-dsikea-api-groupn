@@ -133,12 +133,10 @@ transactionsRouter.post(
               color: item.color,
             }),
           );
-          // console.log(furniture);
           const saleResult = await getSale(furniture);
           if ("error" in saleResult) {
             return res.status(400).send(saleResult);
           } else {
-            // console.log(saleResult);
             const transaction = new Transaction({
               type: req.body.type,
               furniture: saleResult.furniture,
@@ -169,12 +167,10 @@ transactionsRouter.post(
             quantity: item.quantity,
             color: item.color,
           }));
-          // console.log(furniture);
           const purchaseResult = await getPurchase(furniture);
           if ("error" in purchaseResult) {
             return res.status(400).send(purchaseResult);
           } else {
-            // console.log(purchaseResult);
             const transaction = new Transaction({
               type: req.body.type,
               furniture: purchaseResult.furniture,
@@ -204,90 +200,108 @@ transactionsRouter.post(
  * @param {Response} res - The response object.
  * @returns {Response} - The updated transaction or appropriate error message.
  */
-transactionsRouter.patch(
-  "/transactions/:id",
-  async (req, res) => {
-    const transaction = await Transaction.findOne({
-      _id: req.params.id,
+transactionsRouter.patch("/transactions/:id", async (req, res) => {
+  const transaction = await Transaction.findOne({
+    _id: req.params.id,
+  });
+  if (!transaction) {
+    return res.status(404).send({ error: "Transaction not found" });
+  }
+  if (req.body.type) {
+    return res
+      .status(400)
+      .send({ error: "You cannot change the type of the transaction" });
+  }
+  if (req.body.price) {
+    return res.status(400).send({
+      error:
+        "You cannot change the price of the transaction, only if you change the furniture",
     });
-    if (!transaction) {
-      return res.status(404).send({ error: "Transaction not found" });
-    }
-    if (req.body.type){
-      return res.status(400).send({ error: "You cannot change the type of the transaction" });
-    }
-    if(req.body.price){
-      return res.status(400).send({ error: "You cannot change the price of the transaction, only if you change the furniture"});
-    }
-    if (req.body.date){
-      Transaction.findByIdAndUpdate(
-        { _id: req.params.id },
-        { date: req.body.date },
-        { new: true, runValidators: true }
-      );
-    }
-      if (transaction.type === "Sale") {
-        if (req.body.customer) {
+  }
+  if (req.body.date) {
+    Transaction.findByIdAndUpdate(
+      { _id: req.params.id },
+      { date: req.body.date },
+      { new: true, runValidators: true },
+    );
+  }
+  if (transaction.type === "Sale") {
+    if (req.body.customer) {
+      const customer = await Customer.findOne({ _id: req.body.customer });
+      if (customer) {
         Transaction.findByIdAndUpdate(
           { _id: req.params.id },
           { customer: req.body.customer },
-          { new: true, runValidators: true }
+          { new: true, runValidators: true },
         );
-        } else if (req.body.provider) {
-          return res.status(400).send({ error: "You cannot change the provider of a Sale transaction" });
-        }
-        if (req.body.furniture) {
-          resetSale(transaction.furniture);
-          const furnitureMap = req.body.furniture.map(
-            (item: bodyTransFurniture) => ({
-              quantity: item.quantity,
-              name: item.name,
-              material: item.material,
-              color: item.color,
-            }),
-          );
-          const saleResult = await getSale(furnitureMap);
-          console.log(transaction.furniture)
-          if ("error" in saleResult) {
-            return res.status(400).send(saleResult);
-          } else {
-            await Transaction.findOneAndUpdate({ _id: req.params.id },
-              {
-                furniture: saleResult.furniture,
-                price: saleResult.totalPrice,
-              },
-              { new: true, runValidators: true}
-            );
-          }
-        }
-      } else if (transaction.type === "Purchase") {
-        if (req.body.provider) {
+      } else {
+        return res.status(404).send({ error: "Customer not found" });
+      }
+    } else if (req.body.provider) {
+      return res.status(400).send({
+        error: "You cannot change the provider of a Sale transaction",
+      });
+    }
+    if (req.body.furniture) {
+      resetSale(transaction.furniture);
+      const furnitureMap = req.body.furniture.map(
+        (item: bodyTransFurniture) => ({
+          quantity: item.quantity,
+          name: item.name,
+          material: item.material,
+          color: item.color,
+        }),
+      );
+      const saleResult = await getSale(furnitureMap);
+      if ("error" in saleResult) {
+        return res.status(400).send(saleResult);
+      } else {
+        await Transaction.findOneAndUpdate(
+          { _id: req.params.id },
+          {
+            furniture: saleResult.furniture,
+            price: saleResult.totalPrice,
+          },
+          { new: true, runValidators: true },
+        );
+      }
+    }
+  } else if (transaction.type === "Purchase") {
+    if (req.body.provider) {
+      const provider = await Provider.findOne({ _id: req.body.provider });
+      if (provider) {
         Transaction.findByIdAndUpdate(
           { _id: req.params.id },
           { provider: req.body.provider },
-          { new: true, runValidators: true }
+          { new: true, runValidators: true },
         );
-        } else if (req.body.customer) {
-          return res.status(400).send({ error: "You must provide the provider on a Purchase" });
-        }
-        if (req.body.Furniture){
-          resetPurchase(transaction.furniture);
-          const purchaseResult = await getPurchase(req.body.furniture);
-          if ("error" in purchaseResult) {
-            return res.status(400).send(purchaseResult);
-          } else {
-            await Transaction.findOneAndUpdate({ _id: req.params.id },
-              {
-                furniture: purchaseResult.furniture,
-                price: purchaseResult.totalPrice,
-              },
-              { new: true, runValidators: true}
-            );
-          }
-        }
-      } 
-    return res.status(201).send({ message: "Transaction updated" });
-  });
+      } else {
+        return res.status(404).send({ error: "Provider not found" });
+      }
+    } else if (req.body.customer) {
+      return res
+        .status(400)
+        .send({ error: "You must provide the provider on a Purchase" });
+    }
+    if (req.body.Furniture) {
+      resetPurchase(transaction.furniture);
+      const purchaseResult = await getPurchase(req.body.furniture);
+      if ("error" in purchaseResult) {
+        return res.status(400).send(purchaseResult);
+      } else {
+        await Transaction.findOneAndUpdate(
+          { _id: req.params.id },
+          {
+            furniture: purchaseResult.furniture,
+            price: purchaseResult.totalPrice,
+          },
+          { new: true, runValidators: true },
+        );
+      }
+    }
+  }
+  return res.status(201).send({ message: "Transaction updated" });
+});
 
 /**
  * Handles DELETE requests for removing transactions by their ID.
@@ -315,10 +329,6 @@ transactionsRouter.delete(
           resetPurchase(transaction.furniture);
           Transaction.findOneAndDelete({ _id: req.params.id });
           return res.status(201).send("Transaction deleted");
-        } else {
-          return res
-            .status(404)
-            .send({ error: "Transaction type not admitted" });
         }
       } else {
         return res.status(404).send({ error: "Transaction not found" });
@@ -326,15 +336,21 @@ transactionsRouter.delete(
     } catch {
       return res.status(500).send(Error);
     }
-
   },
 );
 
-transactionsRouter.delete("/transactions/All", async (req: Request, res: Response) => {
+transactionsRouter.delete("/transactions", async (req, res) => {
   try {
-    await Transaction.deleteMany();
-    return res.send("All transactions deleted");
+    if (req.query.all === "1") {
+      await Transaction.deleteMany();
+      return res.status(201).send("All transactions deleted");
+    } else {
+      return res.status(400).send({
+        error:
+          "You must provide the query parameter 'all' with the value '1' to delete all transactions",
+      });
+    }
   } catch (error) {
-    return res.status(500).send
+    return res.status(500).send(error);
   }
 });

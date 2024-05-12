@@ -11,7 +11,6 @@ import {
 } from "./furnitureRouter.spec.js";
 import { expect } from "chai";
 
-
 const firstTransaction = {
   _id: "60d5ec3a8891df7a841211a7",
   type: "Purchase",
@@ -500,20 +499,42 @@ describe("PATCH /transactions/:id", () => {
   it("Should not update a transaction's type", async () => {
     const response = await request(app)
       .patch(`/transactions/${firstTransaction._id}`)
-      .send({ type: "Purchase"})
+      .send({ type: "Purchase" })
       .expect(400);
-    expect(response.body).to.have.property( "error", "You cannot change the type of the transaction" );
+    expect(response.body).to.have.property(
+      "error",
+      "You cannot change the type of the transaction",
+    );
   });
 
   it("Should update a transaction's customer", async () => {
     const response = await request(app)
       .patch(`/transactions/${fourthTransaction._id}`)
-      .send({ customer: firstCustomer._id})
+      .send({ customer: firstCustomer._id })
       .expect(201);
     expect(response.body).to.have.property("message", "Transaction updated");
   });
 
-  it("Should not ", async () => {
+  it("Triying to update a transaction's Sale whit a no exist ID for customer", async () => {
+    const response = await request(app)
+      .patch(`/transactions/${fourthTransaction._id}`)
+      .send({ customer: "60d5ec3a8891df7a841211a7" })
+      .expect(404);
+    expect(response.body).to.have.property("error", "Customer not found");
+  });
+
+  it("Triying to update a transaction's Sale whit a provider", async () => {
+    const response = await request(app)
+      .patch(`/transactions/${fourthTransaction._id}`)
+      .send({ provider: firstProvider._id })
+      .expect(400);
+    expect(response.body).to.have.property(
+      "error",
+      "You cannot change the provider of a Sale transaction",
+    );
+  });
+
+  it("Should update a transaction provider", async () => {
     const response = await request(app)
       .patch(`/transactions/${firstTransaction._id}`)
       .send({ provider: secondProvider._id })
@@ -521,7 +542,26 @@ describe("PATCH /transactions/:id", () => {
     expect(response.body).to.have.property("message", "Transaction updated");
   });
 
-  it("Should update a transaction's furniture", async () => {
+  it("Triying to update a transaction's Purchase whit a no exist ID for provider", async () => {
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ provider: "60d5ec3a8891df7a841211a7" })
+      .expect(404);
+    expect(response.body).to.have.property("error", "Provider not found");
+  });
+
+  it("Triying to update a transaction's Purchase whit a customer", async () => {
+    const response = await request(app)
+      .patch(`/transactions/${firstTransaction._id}`)
+      .send({ customer: firstCustomer._id })
+      .expect(400);
+    expect(response.body).to.have.property(
+      "error",
+      "You must provide the provider on a Purchase",
+    );
+  });
+
+  it("Should update a Purchase transaction's furniture", async () => {
     const updatedFurniture = [
       {
         quantity: 2,
@@ -542,6 +582,27 @@ describe("PATCH /transactions/:id", () => {
       .expect(201);
   });
 
+  it("Should update a Sale transaction's furniture", async () => {
+    const updatedFurniture = [
+      {
+        quantity: 2,
+        name: firstFurniture.name,
+        material: firstFurniture.material,
+        color: firstFurniture.color,
+      },
+      {
+        quantity: 4,
+        name: secondFurniture.name,
+        material: secondFurniture.material,
+        color: secondFurniture.color,
+      },
+    ];
+    await request(app)
+      .patch(`/transactions/${thirdTransaction._id}`)
+      .send({ furniture: updatedFurniture })
+      .expect(201);
+  });
+
   it("Should update a transaction's date", async () => {
     const updatedDate = "2022-01-05T00:00:00.000Z";
     const response = await request(app)
@@ -551,13 +612,16 @@ describe("PATCH /transactions/:id", () => {
     expect(response.body).to.have.property("message", "Transaction updated");
   });
 
-  it("Should update a transaction's price", async () => {
+  it("Triying to update a transaction's price", async () => {
     const updatedPrice = 1000;
     const response = await request(app)
       .patch(`/transactions/${firstTransaction._id}`)
       .send({ price: updatedPrice })
       .expect(400);
-    expect(response.body).to.have.property("error", "You cannot change the price of the transaction, only if you change the furniture");
+    expect(response.body).to.have.property(
+      "error",
+      "You cannot change the price of the transaction, only if you change the furniture",
+    );
   });
 
   it("Should return 404 if the transaction ID does not exist", async () => {
@@ -570,11 +634,31 @@ describe("PATCH /transactions/:id", () => {
 });
 
 describe("DELETE /transactions/:id", () => {
-  it("Should delete a transaction if its exist", async () => {
-  await request(app).delete(`/transactions/${firstTransaction._id}`).expect(201);
+  it("Should delete a Purchasee transaction type", async () => {
+    await request(app)
+      .delete(`/transactions/${firstTransaction._id}`)
+      .expect(201);
+  });
+
+  it("Should delete a Sale transaction type", async () => {
+    await request(app)
+      .delete(`/transactions/${thirdTransaction._id}`)
+      .expect(201);
   });
 
   it("Should return 400 if the transaction ID does not exist ", async () => {
-    await request(app).delete(`/transactions/663d72f1e8c597ba49ab8aa0`).expect(404);
+    await request(app)
+      .delete(`/transactions/663d72f1e8c597ba49ab8aa0`)
+      .expect(404);
+  });
+});
+
+describe("DELETE /transactions", () => {
+  it("Should delete all transactions", async () => {
+    await request(app).delete("/transactions?all=1").expect(201);
+  });
+
+  it("Should delete all transactions whit incorrectly all query", async () => {
+    await request(app).delete("/transactions?all=0").expect(400);
   });
 });
